@@ -2,6 +2,6 @@
 
 .include <bsd.own.mk>
 
-SUBDIR=	man7
+SUBDIR=	man3 man7
 
 .include <bsd.subdir.mk>
