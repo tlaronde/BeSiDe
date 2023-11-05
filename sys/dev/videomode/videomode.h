@@ -62,6 +62,7 @@ struct videomode {
 #define VID_PIXMUX	0x1000
 #define VID_DBLCLK	0x2000
 #define VID_CLKDIV2	0x4000
+#define VID_REDUCEDBLANKING	0x8000
 
 extern const struct videomode videomode_list[];
 extern const int videomode_count;
