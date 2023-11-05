@@ -58,22 +58,22 @@ __KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.18 2022/09/25 21:27:39 thorpej Exp $");
 
 /* These are reversed established timing order */
 static const char *_edid_modes[] =  {
-	"1280x1024x75",
-	"1024x768x75",
-	"1024x768x70",
-	"1024x768x60",
-	"1024x768x87i",
-	"832x624x74",	/* rounding error, 74.55 Hz aka "832x624x75" */
-	"800x600x75",
-	"800x600x72",
-	"800x600x60",
-	"800x600x56",
-	"640x480x75",
-	"640x480x72",
-	"640x480x67",
-	"640x480x60",
-	"720x400x87",	/* rounding error, 87.85 Hz aka "720x400x88" */
-	"720x400x70",
+	"1280x1024@75Hz", 
+	"1024x768@75Hz",
+	"1024x768@70Hz",
+	"1024x768@60Hz",
+	"1024x768@87Hz_i", /* not VESA */
+	"832x624@75Hz", /* not VESA */
+	"800x600@75Hz",
+	"800x600@72Hz",
+	"800x600@60Hz",
+	"800x600@56Hz",
+	"640x480@75Hz",
+	"640x480@72Hz",
+	"640x480@67Hz", /* not VESA */
+	"640x480@60Hz", /* not VESA */
+	"720x400@88Hz", /* not VESA */
+	"720x400@70Hz", /* not VESA */
 };
 
 #ifdef	EDIDVERBOSE
@@ -359,7 +359,7 @@ edid_std_timing(uint8_t *data, struct videomode *vmp)
 	f = EDID_STD_TIMING_VFREQ(data);
 
 	/* first try to lookup the mode as a DMT timing */
-	snprintf(name, sizeof(name), "%dx%dx%d", x, y, f);
+	snprintf(name, sizeof(name), "%dx%d@%dHz", x, y, f);
 	if ((lookup = edid_mode_lookup_list(name)) != NULL) {
 		*vmp = *lookup;
 	} else {

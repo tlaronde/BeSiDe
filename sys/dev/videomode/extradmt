@@ -1,0 +1,57 @@
+# $NetBSD$
+# Typed by Thierry Laronde <tlaronde@polynum.com> on 2023-02-27.
+#
+# The format shall be the same as the one described in the file "dmt"
+# (see this file for reference).
+#
+# These values are just the VESA EDID Established timings that are not
+# given in VESA DMT.
+#
+# They are derived from XFree86:
+# xsrc/external/mit/xorg-server/dist/hw/xfree86/modes/xf86EdidModes.c
+#
+# For one value, the XFree86 file "xf86EdidModes.c" uses 1152x864@75Hz
+# instead of the specified 1152x870@75Hz. We derive our parameters,
+# instead, for the specified 1152x870@75Hz from the Linux file:
+#
+# drivers/video/fbdev/macmodes.c
+#
+# It must be noted that XFree86 and the Linux kernel, at least for
+# the other Mac modes, do not agree...
+#
+# Since the values given do not specify the margins, for a line or a
+# frame, and since the GTF doesn't apply (none of the parameters found
+# from the above sources correspond to a GTF timing), all margins
+# are taken as 0 and the blanking time is all in the porch times.
+#
+# This does mean that the "specifications" below are definitively _not_
+# authoritative and should be taken for what they are worth.
+#
+
+# 832x624@75Hz Apple, Mac II
+832x624@75Hz ,, 832 624 57.284 8 N,N - - 0 4 8 28 0 0 1 3 21 0
+
+# 720x400@70Hz IBM, VGA
+# VGA 80 x 25 with characters sized 9x16 pixels (and generally fonts
+# with 8 pixels glyphes, the 9th pixel being the 8th pixel repeated,
+# leading to a better separation of characters).
+# There is a discrepancy in the dot clocks: the VGA dot clocks seems
+# to have been fixed 25.175MHz and this is not what is given here...
+#
+720x400@70Hz ,, 720 400 28.320 9 N,N - + 0 2 12 6 0 0 12 2 35 0
+
+# 720x400@88Hz IBM, XGA2
+720x400@88Hz ,, 720 400 35.500 9 N,N - - 0 2 12 6 0 0 21 2 26 0
+
+# 640x480@67Hz Apple, Mac II
+640x480@67Hz ,, 640 480 30.240 8 N,N - - 0 8 8 12 0 0 3 3 39 0
+
+# 1152x870@75Hz Apple, Mac II
+1152x870@75Hz ,, 1152 870 100.000 8 N,N + + 0 6 16 16 0 0 3 3 39 0
+
+# These are for documentation only (not "established"; but since I found
+# the information on the Internet while searching for the established
+# ones, these, unused, are saved here):
+#
+# 640x350@70Hz ,, 640 350 25.175 8 N,N + - 1 1 12 5 1 6 31 2 54 6
+# 640x400@70Hz ,, 640 400 25.175 8 N,N - + 1 1 12 5 1 7 5 2 28 7
