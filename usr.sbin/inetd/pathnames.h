@@ -34,3 +34,4 @@
 #include <paths.h>
 
 #define	_PATH_INETDCONF	"/etc/inetd.conf"
+#define	_PATH_INETDFBAKCONF	"/etc/inetd.fallback.conf"
