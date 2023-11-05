@@ -29,6 +29,5 @@
  * SUCH DAMAGE.
  */
 
-extern int ipsecsetup(int, int, const char *);
-extern int ipsecsetup_test(const char *);
-extern int ipsecsetup0(int, int, const char *, int);
+extern int ipsec_ck(void);
+extern int ipsec_set(sa_family_t, int, const char *);

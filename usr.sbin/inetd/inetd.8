@@ -57,19 +57,27 @@
 .\"
 .\"     from: @(#)inetd.8       8.4 (Berkeley) 6/1/94
 .\"
-.Dd October 12, 2021
+.Dd June 27, 2023
 .Dt INETD 8
 .Os
 .Sh NAME
 .Nm inetd ,
-.Nm inetd.conf
+.Nm /etc/inetd.conf ,
+.Nm /etc/inetd.fallback.conf
 .Nd internet
 .Dq super-server
 .Sh SYNOPSIS
 .Nm
-.Op Fl d
 .Op Fl l
-.Op Ar configuration file
+.Op Fl r
+.Op Fl s
+.Op Fl f Op Fl d
+.Op Ar configuration-file
+.Pp
+.Nm
+.Fl c
+.Op Fl d
+.Op Ar configuration-file
 .Sh DESCRIPTION
 .Nm
 should be run at boot time by
@@ -78,67 +86,486 @@ should be run at boot time by
 .Xr rc 8 ) .
 It then opens sockets according to its configuration and listens
 for connections.
-When a connection is found on one of its sockets, it decides what
-service the socket corresponds to, and invokes a program to service
+When a connection is received on one of its sockets, it decides what
+service the socket corresponds to and invokes a program to service
 the request.
-After the program is finished, it continues to listen on the socket
-(except in some cases which will be described below).
+Whether
+.Nm
+waits for the service to finish or returns listening for other requests
+on the socket depends on the configuration and upon the nature of the
+service requested.
 Essentially,
 .Nm
 allows running one daemon to invoke several others,
 reducing load on the system.
 .Pp
+.Nm
+has two functional modes: it can be a
+.Nm checker
+simply checking the validity of the config file, or it can be a
+.Nm server
+actually serving the config file.
+.Pp
+The two functional modes are described separately even though the checker
+is only the first stage of the server.
+.Ss Common principles
+The following essentials have to be kept in mind:
+.Pp
+There is always one and only one config, the one specified when starting
+the program. This configuration file has to be specified by an absolute
+path name.
+.Pp
+Reloading means reloading this config. Even in
+.Em fallback
+mode (explained below in the
+.Sx Server
+sub-section), the fallback config (whose fixed name is
+.Nm /etc/inetd.fallback.conf )
+is used only once and does not substitute its pathname for the original
+pathname of the config.
+.Pp
+An erroneous configuration is never served.
+.Ss Checker
+.Pp
+.Nm
+.Fl c
+.Op Fl d
+.Op Ar configuration file
+.Pp
+.Nm
+is in checker mode when
+.Fl c
+is given. This flag causes the server-related flags, such as
+.Fl l ,
+.Fl s ,
+to have no effect.
+.Pp
+In this case,
+.Nm
+does only the initial checking of the config.
+.Pp
+In this functional mode, no lock is acquired and no privilege is
+required beyond the ability to read the configuration.
+.Pp
+In this mode,
+.Nm
+returns zero on successful parsing and nonzero on error.
+If
+.Fl d
+is given, debugging messages about the parsing are sent to stderr.
+If the parsing is successful, the configuration parsed, in
+.Sx Key-Values Notation ,
+is sent to stdout.
+.Pp
+Even if
+.Fl d
+is not given, a warning message about the use of a deprecated feature
+(support for a deprecated feature could be removed in the future) is
+still sent to stderr.
+.Pp
+Nothing is taken from stdin.
+.Ss Server
+.Nm
+.Op Fl l
+.Op Fl r
+.Op Fl s
+.Op Fl f Op Fl d
+.Op Ar configuration file
+.Pp
 The options available for
 .Nm :
 .Bl -tag -width Ds
-.It Fl d
-Turns on debugging and runs
-.Nm
-in the foreground.
 .It Fl f
 Runs
 .Nm
 in the foreground.
+.It Fl d
+Turns on supplementary debugging information.
 .It Fl l
 Turns on libwrap connection logging.
+.It Fl r
+Turns on
+.Em resilient
+mode (see below).
+.It Fl s
+Turns on strict checking mode about the permissions of the config: if
+the server is run as root and one of the files composing the config is
+writable by someone else than root, the config is rejected.
 .El
 .Pp
 Upon execution,
 .Nm
 reads its configuration information from a configuration
-file which, by default, is
+file which, if no config absolute pathname is given as argument is, by
+default,
 .Pa /etc/inetd.conf .
-The path given for this configuration file must be absolute, unless
-the
+.Pp
+In server mode (which is the default),
+.Nm
+will put itself in the background, meaning that, except during
+initial startup,
+nothing will be taken from stdin and nothing will be sent to stdout or
+to stderr: messages are logged using
+.Xr syslog 3 .
+.Pp
+If foreground mode is requested by the
+.Fl f
+flag (for compatibility,
 .Fl d
-option is also given on the command line.
+also implies
+.Fl f ) ,
+standard input, output, and error are not closed and error messages go
+to stderr, not to
+.Xr syslog 3 .
 .Pp
-Services can be specified using the legacy `positional' notation or the
-`key-values' notation described in the sections
+In all cases, nothing is taken from stdin. A successfully parsed config
+is sent to the log via the
+.Xr syslog 3
+facilities, if in the background, or to stdout, if in the foreground.
+.Pp
+Messages about the use of a deprecated feature (support for it could be
+removed in the future) is sent via
+.Xr syslog 3
+facilities, if in the background, or to stdout, if in the foreground,
+even if
+.Fl d
+has not been given.
+.Pp
+There is the possibility to send control commands to
+.Nm
+in server mode with a
+.Xr signal 7 .
+.Pp
+.Nm
+rereads its configuration file when it receives a hangup signal,
+.Dv SIGHUP .
+In normal mode, if the reloading of the configuration fails due to
+errors,
+.Nm
+exits. This is not the case with the
+.Em resilient
+mode described below.
+.Pp
+.Nm
+switches temporarily (once) to the fallback config
+.Em /etc/inetd.fallback.conf ,
+if it receives the
+.Dv SIGUSR1
+signal. As specified above, this does not mean that when instructed,
+later, to reload,
+.Nm
+will reload the fallback config; it will still reload
+the config specified at startup time.
+.Ss Server Resilient mode
+By default, as described above, in server mode, an error in
+configuration is
+fatal: the server exits. In resilient mode, requested by the use of
+.Fl d ,
+if, at startup time, the config given has errors, the server doesn't
+exit but tries to serve the
+.Em /etc/inetd.fallback.conf
+config in its stead. If even this fallback config is incorrect at
+start-up time, 
+.Nm
+doesn't exit but wait for signals without serving anything.
+.Pp
+When in such a resilient mode, an instruction to reload will only try
+to reload the config given at startup time,
+not the fallback one. But, instead of exiting in case of error in
+this new version of the config
+.Nm
+was instructed to reload, the server will hang on the previous services
+it was serving (hence a previously loaded correct version of the
+config will continue to be served even if the new version has errors).
+.Pp
+If the user wants the fallback config to be served in its stead, there
+is always the possibility to instruct
+.Nm
+to do so by sending the 
+.Dv SIGUSR1
+signal.
+.Sh CONFIGURATION FILE
+The configuration is a unique file, defined (at startup time)
+by its absolute pathname whether given as an argument to the program,
+or
+.Pa /etc/inetd.conf
+by default.
+.Pp
+The configuration is a sequence of newline-terminated lines,
+interpreted in the
+.Em C locale.
+In what follows, when a reference is made to
+.Em blank,
+.Em space,
+.Em float,
+.Em alpha
+etc., this is to be interpreted according to
+.Xr isblank 3 ,
+et al, in the C locale.
+.Pp
+The configuration can be assembled by including (or sourcing) other
+files (see the
+.Em .include
+directive below), the behavior being exactly the same as if the content
+of the included file had been written directly in the configuration
+with one exception: a
+.Em statement
+cannot span file boundaries.
+.Pp
+A configuration is interpreted as a series of
+.Em statements.
+There are three types of statement, each type being identified by the
+very first character of the line beginning the statement:
+.Pp
+.Em Empty statement:
+The first character is also the last i.e. the
+newline. An empty statement is a no-op and is ignored; it cannot span
+multiple lines.
+.Pp
+.Em Directive:
+The first character is a dot. The dot is immediately followed, without
+any space, by a keyword, usually followed by blanks and further tokens.
+.Pp
+.Em Service entry:
+The first character is neither a dot nor a space and is part of a
+value. This value identifies the
+token. Following are either values (in the so-called
 .Sx Positional Notation
-and
-.Sx Key-Values Notation
-below.
-.Ss Positional Notation
-There must be an entry for each field of the configuration
-file, with entries for each field separated by a tab or
-a space.
-Comments are denoted by a ``#'' at the beginning of a line (see subsection
-.Sx Key-Values Notation
-for defining comments in key-values definitions).
-There must be an entry for each field (except for one
-special case, described below).
-A positional definition is terminated by a newline.
-The fields of the configuration file are as follows:
+) or the token
+.Em on
+or
+.Em off
+and a series of comma-separated triplets
+.Em keyword operator value(s)
+(in the so-called
+.Sx Key-Value Notation).
 .Pp
+As noted above, a statement must be totally defined in the same file and
+can not span file boundaries. A statement ends by a new line (not
+followed by an indented continuation line for a non-empty statement) or,
+for non-empty statements, by optional blanks, a semicolon
+.Sq \&;
+and optional blanks.
+.Pp
+A long line or a long keyword or value can be split using the same
+mechanism as in the
+.Xr sh 1 , 
+i.e. using a backslash
+.Sy \e
+just before a newline. The backslash and the newline are both removed
+and the next line is appended to the current one as if the escaping
+sequence has not existed.
+.Pp
+There is also the possibility to break a non empty statement (empty
+statements are no-op and have no continuation lines), that is after the
+first token defining the type of statement, and in any place where
+blanks are expected or allowed, by simply indenting the continuation
+line with a blank.
+The first line and all the indented continuation lines will be
+considered part of the statement.
+.Pp
+For convenience, there are lexicographical features allowing to
+give as definition to a value characters that have a special meaning
+or effect, or to put comments in the configuration file.
+These lexicographical conveniences are handled early in the processing
+and are not part of the definition of the statements: comments are
+removed and escaped characters are replaced.
+.Pp
+Comments begin by a
+.Sq \&#
+character and end at the end of line (the end of the line character
+being retained). A comment is ignored so that the parsing of the
+statement is the same as if no comment has been given. Hence, a line
+can begin by a
+.Sq \&#
+character, with the effect that the line will be considered as an empty
+statement and will then be ignored. A comment can also appear after a
+keyword, an operator, a separator or a value. Since a comment suppresses
+the rest of the line, to comment parts of the definition of a non empty
+statement, one must use indented continuation lines (because the end of
+line being retained after suppression of the comment, the sequence end
+of line and leading blank indicating, for a non-empty statement, a
+continuation line, works).
+.Pp
+The other lexicographical conveniences allow to give as definition of
+.Em values ,
+characters that have a special meaning in the parsing.
+.Pp
+Keywords, operators, separators and values are tokens. Between values,
+there must be blanks. The blanks are optional between a keyword and an
+operator, an operator and a value, or between a value and a separator,
+and a separator and a keyword.
+.Pp
+There can be comments between tokens---but, as explained above, since a
+comment runs from the sharp character to the end of line (end of line
+excluded), the tokens separated by comments must be in different lines
+forming the same statement.
+.Pp
+Keywords, operators
+.Pf ( Sq \&= ) ,
+separators
+.Pf ( Sq \&, ) ,
+and terminators
+.Pf ( Sq \&; )
+must be present literally: quoting and escaping is valid only when parsing a
+value.
+.Pp
+A token can be split between different lines using the
+.Xr sh 1
+convention (escaping the new line).
+.Pp
+A
+.Em value
+can be defined using quotes and/or escape sequences to include
+characters that have a special meaning for the parsing (blanks,
+.Sq \&= ,
+.Sq \&, ,
+.Sq \&; ,
+and
+.Sq \&# ) .
+The scanner accepts both single quoting and double
+quoting, the difference in behavior between the two different type of
+quotes being the same as in
+.Xr sh 1 :
+between single quotes, bytes are taken as is; between double
+quotes, the escape sequences are interpreted.
+.Pp
+The escape sequences supported, with their meanings:
+.Bl -hang -width "\xXX" -offset indent
+.It Sy \ea
+Bell character.
+.It Sy \eb
+Backspace character.
+.It Sy \ef
+Form-feed character.
+.It Sy \en
+Line feed character.
+.It Sy \er
+Carriage return character.
+.It Sy \et
+Tab character.
+.It Sy \ev
+Vertical tab character.
+.It Sy \e'
+Single quote character.
+.It Sy \e"
+Double quote character.
+.It Sy \e\e
+Backslash character.
+.It Sy \e,
+Comma (separator) character.
+.It Sy \e=
+Equal sign (operator) character.
+.It Sy \exXX
+Hexadecimal byte value, replace XX.
+.It Sy \eddd
+Variable length octal value: one to three digit octal byte value.
+.El
+.Ss Directives
+All the directives start with a dot
+.Sq \&.
+as the first character of a line,
+immediately followed by a sequence of letters (underscore counts as a
+letter) and numbers, starting with a letter.
+There must be no space between the dot and the keyword.
+The following directives are presently implemented:
+.Pp
+.Li ".defhost"
+[<listen-addr>]
+.Pp
+or, for backward compatibility (but deprecated):
+.Pp
+.Em <listen-addr>:
+.Pp
+This sets the default listening address to the one given. The initial
+definition, for compatibility with the historical configuration files,
+is \&*, meaning "any". If no argument is given, this default is restored.
+.Pp
+.Li ".grestore"
+[[defhost] [ipsec]]
+.Pp
+This directive sets flags. If the keyword
+.Em defhost
+is given, a flag is set which causes the default host setting to be
+saved and restored across file inclusions.  Similarly,
+.Em ipsec
+causes IPsec settings (see below) to be saved and restored across file
+inclusions.
+If a keyword is not given, its flag is cleared. So giving no argument
+clears all flags.
+.Pp
+For compatibility with the previous implementation, both flags are set
+initially.
+.Pp
+Note that this sets flags. The value restored (for the default host or
+the default ipsec) when an included file ends is not the one in effect
+when the flag was set, but the one in effect just before the inclusion.
+.Pp
+.Li ".ipsec"
+[<IPsec policy> [<IPsec policy>]...]
+.Pp
+or for backward compatibility but deprecated, abusing a comment that
+has to start at the beginning of a line of is own:
+.Pp
+.Li "#@"
+[<IPsec policy> [<IPsec policy>]...]
+.Pp
+Sets the default IPsec policy, assigned to any service without its own
+policy defined, to the combination of the policies passed as
+arguments. Each IPsec policy is a value and can be specified, if
+necessary, using quoting and/or escaping and several IPsec policy
+directives can be put in the same string separated by a semicolon. The
+old form as a pseudo-comment is still supported but deprecated. The
+policies specified have to conform to
+.Xr ipsec_set_policy 3 .
+If conflicting policy strings are found in a single line,
+the last of these conflicting strings will take effect.
+.Pp
+If no argument is given, the default IPsec policy is reset to its default:
+none.
+.Pp
+\&.include <glob-path>
+.Pp
+Other files can be read by inetd by specifying an include directive
+in an inetd config file.
+.Em glob-path
+(see
+.Xr glob 7 )
+is an absolute path or a path relative (including parent directories)
+to the directory of the
+.Em parent file
+that is the file containing the
+.Sq \&.include
+directive. The parameter is always considered as a pattern, though it
+needs not contain any globbing characters. Incorrect
+included files (not found; not the right type; not readable, etc.) are
+errors.
+.Pp
+If the pattern expands to multiple files, they are included in
+.Em lexicographical order .
+Furthermore, loops are detected and there is a maximum of depth of
+inclusion, defined at compile time.
+.Pp
+The inclusion works like a sourced (or dot'ed) file in a shell
+script: the result is the same as if the statements have been directly
+written in the config file. For compatibility with the previous
+implementation, flags are set to restore, at the end of the included
+file, the previous values of the default host and the default policy.
+This can be changed using the
+.Em ".grestore"
+directive, as described above.
+.Ss Service definition
+A service definition can be given whether with the so-called
+.Sx Positional Notation
+(to be explained below) or in the so-called
+.Sx Key-Value Notation
+(to be explained below as well).
+.Pp
+But both starts by the very same
+.Em value :
+the service specification, that has the following form:
 .Bd -unfilled -offset indent -compact
 [listen-addr:]service-spec
-socket-type[:accept-filter]
-protocol[,sndbuf=size][,rcvbuf=size]
-wait/nowait[:max]
-user[:group]
-server-program
-server program arguments
 .Ed
 .Pp
 The
@@ -146,9 +573,9 @@ The
 parameter specifies the local address
 .Nm
 should use when listening.
-The single character
-.Dq \&*
-means
+If this is just a single
+.Dq \&* ,
+this means
 .Dv INADDR_ANY :
 all local addresses.
 The
@@ -177,8 +604,8 @@ For
 services (discussed below), the service name
 .Em must
 be the official name of the service (that is, the first entry in
-.Pa /etc/services )
-and not an alias for it.
+.Pa /etc/services ) ,
+not an alias for it.
 .Pp
 For
 .Em Sun-RPC
@@ -195,7 +622,7 @@ on the right of the
 .Dq /
 is the RPC version number.
 This can simply be a single numeric argument or a range of versions.
-A range is bounded by the low version to the high version, e.g.
+A range is bounded by the low version to the high version, e.g.,
 .Dq rusers/1-3 .
 .Pp
 For UNIX-domain (local) services, the
@@ -207,6 +634,33 @@ The
 parameter must not begin with a dot.
 See
 .Sx Directives .
+.Pp
+Following this service-spec are one or more blanks and the next token
+will defined if the remaining of the service definition is in 
+.Em Key-Value Notation
+if this next value is
+.Em on
+or
+.Em off
+or in the
+.Em Positional Notation
+for anything else.
+.Ss Positional Notation
+In this notation, the name of the field is simply implied by the
+column number in a statement considered as a record. Hence the values
+have to be given in a defined order and optional fields are given 
+necessarily at the end.
+The service-spec has been defined at the beginning of the statement,
+so here are only the following fields:
+.Pp
+.Bd -unfilled -offset indent -compact
+socket-type[:accept-filter]
+protocol[,sndbuf=size][,rcvbuf=size]
+wait/nowait[:max]
+user[:group]
+server-program
+server program arguments
+.Ed
 .Pp
 The
 .Em socket-type
@@ -245,7 +699,7 @@ and
 .Dq udp .
 For TCP and UDP, the IP version (4 or 6) may be specified explicitly
 by appending 4 or 6 to the protocol name.
-Otherwise the default version (IPv4) is used.
+Otherwise the default version (currently IPv4) is used.
 For
 .Em Sun-RPC
 the string
@@ -254,7 +708,7 @@ and a slash should be prepended:
 .Dq rpc/tcp
 or
 .Dq rpc/udp .
-If you would like to enable special support for
+To enable support for
 .Xr faithd 8 ,
 prepend the string
 .Dq faith
@@ -272,7 +726,7 @@ By increasing the socket buffer sizes, better
 .Tn TCP
 performance may be realized in some situations.
 The socket buffer sizes are specified by appending their values to
-the protocol specification as follows:
+the protocol specification, as in
 .Bd -literal -offset indent
 tcp,rcvbuf=16384
 tcp,sndbuf=64k
@@ -281,9 +735,9 @@ tcp,rcvbuf=64k,sndbuf=1m
 .Pp
 A literal value may be specified, or modified using
 .Sq k
-to indicate kibibytes or
+to indicate kilobytes or
 .Sq m
-to indicate mebibytes.
+to indicate megabytes.
 Socket buffer sizes may be specified for all
 services and protocols except for tcpmux services.
 .Pp
@@ -291,7 +745,7 @@ The
 .Em wait/nowait
 entry is used to tell
 .Nm
-if it should wait for the server program to return,
+whether it should wait for the server program to exit,
 or continue processing connections on the socket.
 If a datagram server reads a single datagram and connects
 to its peer through a different socket, freeing the service's socket so
@@ -312,8 +766,8 @@ entry.
 .Pq Xr biff 1
 and
 .Xr ntalkd 8
-are both examples of the latter type of
-datagram server.
+are examples of single-threaded
+datagram servers.
 .Xr tftpd 8
 is an exception; it is a datagram server that establishes pseudo-connections.
 It must be listed as
@@ -358,6 +812,9 @@ out and exit when no more connections are active.
 will continue to
 listen on the master socket for connections, so the server should not close
 it when it exits.
+.\" The server _will_ close it when it exits; exiting closes _all_ fds!
+.\" I don't think the server _can_ stop the socket from listening; I
+.\" think there is nothing like shutdown(2) for listening sockets.
 .Xr identd 8
 is usually the only stream server marked as wait.
 .Pp
@@ -399,38 +856,21 @@ should take the place of this entry.
 It is possible to quote an argument using either single or double quotes.
 This allows you to have, e.g., spaces in paths and parameters.
 .Ss Key-Values Notation
-In key-values notation, keys are separated from their associated values by `=',
-values are separated by whitespace, and key-values options are separated by
+In key-values notation, keys are separated from their associated values
+with
+.Sq \&= ,
+values are separated by whitespace, and key-value options are separated by
 commas.
-A service definition is terminated by a semicolon.
-Multiple definitions may exist on a single line (and a line may
-end with a positional definition.
-A key-values definition has the following form:
+A service definition is terminated by a semicolon or an end of line
+(without continuation line).
+Following the common service-spec definition, a key-values definition
+has the following form:
 .Bd -filled -offset indent
-[listen-addr:]service-spec {on|off} <option> = [value1],
+{on|off} <option> = [value1],
 <option> = [value1] [value2] ..., <option> =, ...;
 .Ed
 .Pp
-Values may be in quotes, and support the following escape sequences.
-.Bl -hang -width "\xXX" -offset indent
-.It Sy \e\e
-Backslash.
-.It Sy \en
-Line feed.
-.It Sy \et
-Tab.
-.It Sy \er
-Carriage return.
-.It Sy \e'
-Single quote.
-.It Sy \e"
-Double quote.
-.It Sy \exXX
-Hexadecimal byte value, replace XX.
-.El
-.Pp
-.Em [listen-addr:]service-spec
-has the same form as in positional notation. If
+If
 .Em service-spec
 is followed by
 .Em on
@@ -439,24 +879,11 @@ If
 .Em service-spec
 is followed by
 .Em off
-then the service definition is parsed and errors are output to
-the system log, but the service is not active and no sockets are created.
-.Pp
-Comments that exist between the initial on/off directive
-and the closing semicolon may begin in any column and may exist on the same line
-as non-comment text.
-Note: editor syntax highlighting may be misleading!
-.Pp
-Syntax and semantic error detection is performed on a best-effort basis.
-If an error with a service definition is easily detectable, it will
-log the error using
-.Xr syslog 3
-and continue reading the configuration file if possible, skipping the erroneous
-definition or file.
-Otherwise, it is up to the user to write definitions that conform to the
-documentation.
-Errors may be worded differently depending on the ordering of
-options in the service definition.
+then the service definition is parsed and syntax errors are treated the
+same way as for an
+.Em on
+definition, but the service, successfully parsed, is neither checked nor
+added to the list of services to serve.
 .Pp
 The following are the available values for
 .Em <option>:
@@ -527,12 +954,13 @@ Specifies the maximum number of server instances that may be spawned from
 .Nm
 within an interval of 60 seconds for a given IP address.
 Other address types may also work if supported by
-.Xr getnameinfo 3 ,
+.Xr getnameinfo 3 ;
 test thoroughly using
 .Fl d .
+.\" XXX How can connections from anonymous AF_LOCAL sockets "not work"?
 For example, connections from unnamed Unix sockets
 do not work, but connections from named Unix sockets may work.
-However, there is no way to only accept named Unix sockets.
+However, there is no way to accept only named Unix sockets.
 .It Sy user
 The user to run the program as.
 Equivalent to
@@ -564,87 +992,7 @@ IPsec will be disabled for this service.
 See the
 .Sx Directives
 section for details.
-Currently only one value is allowed, so all IPsec policies
-should be in a quoted string, separated by semicolons.
 .El
-.Ss Directives
-<listen-addr>:
-.Pp
-To avoid the need to repeat listen addresses over and over again,
-listen addresses are inherited from line to line, and the listen
-address can be changed without defining a service by including a line
-containing just a
-.Em listen-addr
-followed by a colon.
-The default (compatible with historical configuration files) is \&*.
-To return to this behavior after configuring some services with
-specific listen addresses, give \&* explicitly.
-.Pp
-.Li "#@"
-[<IPsec policy>] [; [<IPsec policy>]] ...
-.Pp
-The implementation includes a tiny hack to support IPsec policy settings for
-each socket.
-A special form of the comment line, starting with
-.Dq Li "#@" ,
-is used as a policy specifier.
-The content of the above comment line will be treated as a IPsec policy string,
-as described in
-.Xr ipsec_set_policy 3 .
-Multiple IPsec policy strings may be specified by using a semicolon
-as a separator.
-If conflicting policy strings are found in a single line,
-the last string will take effect.
-IPsec policy strings are not parsed in
-comments within a key-values service definition.
-A
-.Li "#@"
-line affects all of the subsequent lines in the same config file,
-so you may want to reset the IPsec policy by using a comment line containing
-only
-.Li "#@"
-.Pq with no policy string .
-.Pp
-If an invalid IPsec policy string appears in a config file,
-.Nm
-logs an error message using
-.Xr syslog 3
-and stops reading the current config file, but may continue reading
-from other files not affected by the IPsec directive.
-.Pp
-\&.include <glob-path>
-.Pp
-Other files can be read by inetd by specifying an include directive in an inetd
-config file.
-.Em glob-path
-is an
-absolute path or a path relative (including parent directories) to the directory
-containing the current config
-file, and may contain glob patterns as specified by
-.Xr glob 7 .
-.Pp
-To include a specific file, include the relative or absolute path of the file.
-To include all files in a directory,
-.Em glob-path
-should be the directory of the files to include followed by "/*".
-.Pp
-The listening address and IPsec configuration strings of the current config file
-are inherited by files included by this directive.
-.Pp
-Files included by this directive using a glob path match are not read in a
-specific order.
-If a specific order is desired, files or directories should be
-included individually without the use of glob patterns.
-Behavior is undefined if
-multiple include directives include the same file and
-this should be avoided.
-Circular references are caught by
-.Nm .
-Anything after
-.Em glob-path
-on the same line is ignored.
-.Em glob-path
-may be in quotes.
 .Ss Internal Services
 .Nm
 provides several
@@ -684,17 +1032,13 @@ TCPmux will return the positive reply for the
 process; this is for compatibility with older server code, and also
 allows you to invoke programs that use stdin/stdout without putting any
 special server code in them.
-Services that use TCPmux are
+Services that use TCPmux are always
 .Qq nowait
 because they do not have a well-known port number and hence cannot listen
 for new requests.
 .Pp
 .Nm
-rereads its configuration file when it receives a hangup signal,
-.Dv SIGHUP .
-Services may be added, deleted or modified when the configuration file
-is reread.
-.Nm
+in server mode
 creates a file
 .Em /var/run/inetd.pid
 that contains its process identifier.
@@ -767,13 +1111,18 @@ for details.
 .Sh FILES
 .Bl -tag -width /etc/hosts.allow -compact
 .It Pa /etc/inetd.conf
-configuration file for all
+default configuration file for all
 .Nm
-provided services
+provided services.
+.It Pa /etc/inetd.fallback.conf
+fallback configuration file
+.Nm
+will fallback to if instructed to do so, whether at startup time if
+error in resilient mode, or at reception of the dedicated signal.
 .It Pa /etc/services
 service name to protocol and port number mappings.
 .It Pa /etc/protocols
-protocol name to protocol number mappings
+protocol name to protocol number mappings.
 .It Pa /etc/rpc
 .Tn Sun-RPC
 service name to service number mappings.
@@ -781,6 +1130,13 @@ service name to service number mappings.
 explicit remote host access list.
 .It Pa /etc/hosts.deny
 explicit remote host denial of service list.
+.It Pa /var/run/inetd.pid
+lock file; when
+.Nm
+acts as a server and is running as root, this prevents concurrent
+execution of multiple such processes. The containing directory
+.Pf ( Pa /var/run )
+must be writable only by root.
 .El
 .Sh SEE ALSO
 .Xr hosts_access 5 ,
@@ -853,29 +1209,19 @@ Support for specifying the socket buffer sizes was added in
 In November 1996, libwrap support was added to provide
 internal tcpd-like access control functionality;
 libwrap is based on Wietse Venema's tcp_wrappers.
-IPv6 support and IPsec hack was made by KAME project, in 1999.
+IPv6 support and IPsec support was added by the KAME project, in 1999.
 .Sh BUGS
 Host address specifiers, while they make conceptual sense for RPC
-services, do not work entirely correctly.
+services, do not work.
 This is largely because the portmapper interface does not provide
 a way to register different ports for the same service on different
 local addresses.
 Provided you never have more than one entry for a given RPC service,
-everything should work correctly (Note that default host address
+everything should work correctly (note that default host address
 specifiers do apply to RPC lines with no explicit specifier.)
 .Pp
 .Em tcpmux
 on IPv6 is not tested enough.
-.Pp
-For automatic IP version detection in key-values syntax (see the
-.Em protocol
-key), addresses with an interface specifier in the form <address>%<iface>
-are not currently supported, as addresses of that form are not parsed by
-.Xr inet_pton 3 .
-.Pp
-If a positional service definition has an invalid parameter and extends
-across multiple lines using tab characters, the subsequent lines after the
-error are treated as new service definitions.
 .Sh SECURITY CONSIDERATIONS
 Enabling the
 .Dq echo ,
@@ -885,3 +1231,47 @@ and
 built-in trivial services is not recommended because remote
 users may abuse these to cause a denial of network service to
 or from the local host.
+.Pp
+As a server, the program invokes
+.Xr pidfile_lock 3
+in order to ensure that only one instance, in server functional state,
+is running with root privileges at a time. It relies on the permissions
+on
+.Pa /var/run/
+being set so that that only root can write to it.  Otherwise, a
+non-root user could run the program, sets the lock and then prevent
+root from running an instance.
+.Sh EXIT STATUS
+.Nm
+exits with a status conforming to the
+.Xr sysexits 3
+description. But this will be seen only if not running detached, in
+daemon mode.
+.Pp
+The successful exit is always indicated by a status of 0, or
+.Dv EX_OK .
+The meaning of the codes is as follows since there are used in a more
+restricted sense than the one described in
+.Xr sysexits 3
+:
+.Bl -tag -width "EX_UNAVAILABLEXX(XX)"
+.It Dv EX_USAGE Pq 64
+The command was used incorrectly, e.g., with the wrong number of
+arguments, a bad flag, a bad syntax in a parameter, or whatever.
+.It Dv EX_UNAVAILABLE Pq 69
+A service is unavailable.
+.It Dv EX_SOFTWARE Pq 70
+Error when globbing an include directive: the paths were not all regular
+files etc. or resource exhaustion: memory error...
+.It Dv EX_OSERR Pq 71
+Impossible to daemonize or to handle kqueue or to execute a program.
+.It Dv EX_IOERR Pq 74
+An error occurred while doing I/O on some file.
+.It Dv EX_TEMPFAIL Pq 75
+Another instance is already running as root.
+.It Dv EX_NOPERM Pq 77
+The program is in server mode under root, and one of the files
+building the configuration is writable by someone else than root.
+.It Dv EX_CONFIG Pq 78
+What it says: something was incorrect in the configuration file.
+.El

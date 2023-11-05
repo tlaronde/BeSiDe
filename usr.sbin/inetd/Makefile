@@ -6,7 +6,7 @@
 USE_FORT?= yes	# network server
 
 PROG=	inetd
-SRCS=	inetd.c parse.c parse_v2.c ratelimit.c
+SRCS=	inetd.c parse.c ratelimit.c sap.c
 MAN=	inetd.8
 MLINKS=	inetd.8 inetd.conf.5
 WARNS=	6
@@ -26,8 +26,10 @@ CPPFLAGS+=-DINET6
 .endif
 
 CPPFLAGS+=-DIPSEC
-SRCS+=	ipsec.c
+SRCS+= ipsec.c
 LDADD+= -lipsec
 DPADD+=	${LIBIPSEC}
+
+#CFLAGS+=-g
 
 .include <bsd.prog.mk>

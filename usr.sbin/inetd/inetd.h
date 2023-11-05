@@ -70,6 +70,7 @@
 
 #include <arpa/inet.h>
 
+#include <limits.h>
 #include <netdb.h>
 #include <stdbool.h>
 
@@ -86,6 +87,12 @@
 #endif
 
 
+#include <assert.h>
+#include <stdio.h>
+#include <sysexits.h> /* see sysexits(3) */
+#define EX_RESOURCE EX_SOFTWARE /* This one should exist. [TL] */
+#include <syslog.h>
+
 #include "pathnames.h"
 
 #ifdef IPSEC
@@ -95,6 +102,10 @@
 #endif
 #include "ipsec.h"
 #endif
+
+#include "sap.h"
+
+extern const char	*myname;
 
 typedef enum service_type {
 	NORM_TYPE = 0,
@@ -106,50 +117,40 @@ typedef enum service_type {
 #define ISMUXPLUS(sep)	((sep)->se_type == MUXPLUS_TYPE)
 #define ISMUX(sep)	(((sep)->se_type == MUX_TYPE) || ISMUXPLUS(sep))
 
-#define	TOOMANY		40		/* don't start more than TOOMANY */
-
-#define CONF_ERROR_FMT "%s line %zu: "
-
-/* Log warning/error with 0 or variadic args with line number and file name */
-
-#define ILV(prio, msg, ...) syslog(prio, CONF_ERROR_FMT msg ".", \
-    CONFIG, line_number __VA_OPT__(,) __VA_ARGS__)
-
-#define WRN(msg, ...) ILV(LOG_WARNING, msg __VA_OPT__(,) __VA_ARGS__)
-#define ERR(msg, ...) ILV(LOG_ERR, msg __VA_OPT__(,) __VA_ARGS__)
-
-/* Debug logging */
-#ifdef DEBUG_ENABLE
-#define DPRINTF(fmt, ...) do {\
-	if (debug) {\
-		fprintf(stderr, fmt "\n" __VA_OPT__(,) __VA_ARGS__);\
-	}\
-} while (false)
-#else
-#define DPRINTF(fmt, ...) __nothing
-#endif
-
-#define DPRINTCONF(fmt, ...) DPRINTF(CONF_ERROR_FMT fmt,\
-	CONFIG, line_number __VA_OPT__(,) __VA_ARGS__)
 
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
 
 /* "Unspecified" indicator value for servtabs (mainly used by v2 syntax) */
+#define	SERVTAB_SERVICE_MAX		40
 #define SERVTAB_UNSPEC_VAL -1
 
 #define SERVTAB_UNSPEC_SIZE_T SIZE_MAX
 
 #define SERVTAB_COUNT_MAX (SIZE_MAX - (size_t)1)
 
-/* Standard logging and debug print format for a servtab */
+/* Standard syslogging and debug print format for a servtab */
 #define SERV_FMT "%s/%s"
-#define SERV_PARAMS(sep) sep->se_service,sep->se_proto
+#define SERV_PARAMS(sep) (sep)->se_service,(sep)->se_proto
+
+/*
+ * Debug info not relevant to syslog only on stderr.
+ */
+#ifdef DEBUG_ENABLE
+#define DPRINTF(fmt, ...) do { \
+	if (debug) \
+		fprintf(stderr, fmt "\n" __VA_OPT__(,) __VA_ARGS__); \
+	} while (false)
+#else
+#define DPRINTF(fmt, ...) __nothing
+#endif
 
 /* rate limiting macros */
 #define	CNT_INTVL	((time_t)60)	/* servers in CNT_INTVL sec. */
 #define	RETRYTIME	(60*10)		/* retry after bind or server fail */
-
+/*
+ * !!! The pointers all point inside the whole allocated in se_allocated.
+ */
 struct	servtab {
 	char	*se_hostaddr;		/* host address to listen on */
 	char	*se_service;		/* name of service */
@@ -163,7 +164,7 @@ struct	servtab {
 	int	se_rpcversh;		/* rpc program highest version */
 #define isrpcservice(sep)	((sep)->se_rpcversl != 0)
 	pid_t	se_wait;		/* single threaded server */
-	short	se_checked;		/* looked at during merge */
+	bool	se_checked;		/* looked at during merge */
 	char	*se_user;		/* user name to run as */
 	char	*se_group;		/* group name to run as */
 	struct	biltin *se_bi;		/* if built-in, description */
@@ -171,7 +172,7 @@ struct	servtab {
 #define	MAXARGV 64
 	char	*se_argv[MAXARGV+1];	/* program arguments */
 #ifdef IPSEC
-	char	*se_policy;		/* IPsec poilcy string */
+	char	*se_ipsec;		/* IPsec policy string */
 #endif
 	struct accept_filter_arg se_accf; /* accept filter for stream service */
 	int	se_fd;			/* open descriptor */
@@ -188,11 +189,12 @@ struct	servtab {
 	size_t	se_service_max;		/* max # of instances of this service per minute */
 	size_t	se_count;		/* number of instances of this service started since se_time */
 	size_t	se_ip_max;  		/* max # of instances of this service per ip per minute */
-	SLIST_HEAD(iplist, rl_ip_node) se_rl_ip_list; /* per-address (IP) rate limting */
+	SLIST_HEAD(iplist, rl_ip_node) se_rl_ip_list; /* per-address (IP) rate limiting */
 	time_t se_time;	/* start of se_count and ip_max counts, in seconds from arbitrary point */
 	
 	/* TODO convert to using SLIST */
 	struct	servtab *se_next;
+	char		*se_allocated;	/* the whole allocations */
 };
 
 struct rl_ip_node {
@@ -229,49 +231,36 @@ struct rl_ip_node {
 /*
  * From inetd.c
  */
-
-void	setup(struct servtab *);
-void	close_sep(struct servtab *);
+void __sysloglike(2, 3)	 my_syslog(int prio, const char *msg, ...);
 void	register_rpc(struct servtab *);
+void	sep_close(struct servtab *);
 void	unregister_rpc(struct servtab *);
 bool	try_biltin(struct servtab *);
 
-/* Global debug mode boolean, enabled with -d */
-extern int debug;
+/* Global checker boolean; set if checker mode */
+extern bool	checker;
+
+/* Global debug mode boolean, only foreground, enabled with -d */
+extern bool	debug;
+
+/* server only: Global boolean indating strict config perm checking */
+extern bool	strict;
+
+/* server only: Global boolean indicating if we are syslogging */
+extern bool	syslogging;
 
 /* rate limit or other error timed out flag */
 extern int	timingout;
-
-/* servtab linked list */
-extern struct servtab *servtab;
 
 /*
  * From parse.c
  */
 
-void	config_root(void);
-int 	parse_protocol(struct servtab *);
-int 	parse_wait(struct servtab *, int);
-int 	parse_server(struct servtab *, const char *);
-void 	parse_socktype(char *, struct servtab *);
-void 	parse_accept_filter(char *, struct servtab *);
-char 	*nextline(FILE *);
-char 	*newstr(const char *);
-
-/* Current line number in current config file */
-extern size_t	line_number;
-
-/* Current config file path */
-extern const char	*CONFIG;
-
-/* Open config file */
-extern FILE	*fconfig;
-
-/* Default listening hostname/IP for current config file */
-extern char	*defhost;
-
-/* Default IPsec policy for current config file */
-extern char	*policy;
+void	cfg_print(struct servtab *);
+void	cfg_drop(struct servtab *);
+int		config(const char *, struct servtab **);
+void	sep_print(int, struct servtab *);
+void	sep_release(struct servtab *);
 
 /*
  * From ratelimit.c
@@ -279,18 +268,5 @@ extern char	*policy;
 
 int	rl_process(struct servtab *, int);
 void	rl_clear_ip_list(struct servtab *);
-
-/*
- * From parse_v2.c
- */
-
-typedef enum parse_v2_result {V2_SUCCESS, V2_SKIP, V2_ERROR} parse_v2_result;
-
-/*
- * Parse a key-values service definition, starting at the token after
- * on/off (i.e. parse a series of key-values pairs terminated by a semicolon).
- * Fills the provided servtab structure. Does not call freeconfig on error.
- */
-parse_v2_result	parse_syntax_v2(struct servtab *, char **);
 
 #endif
