@@ -36,6 +36,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,111 +51,88 @@
 #endif
 #endif
 
+#include "sap.h"
 #include "ipsec.h"
 
 #ifdef IPSEC
+/*
+ * Works with the last string pushed on SAP stack.
+ */
 int
-ipsecsetup(int af, int fd, const char *policy)
+ipsec_ck(void)
 {
-	char *p0, *p;
-	int error;
+	int	status;
+	int	npolicy;
+	int	istr;
+	char	*buf;
 
-	if (policy == NULL || *policy == '\0')
-		p0 = p = strdup("in entrust; out entrust");
-	else
-		p0 = p = strdup(policy);
-
-	error = 0;
-	for (;;) {
-		p = strtok(p, ";");
-		if (p == NULL)
-			break;
-		while (isspace((unsigned char)*p))
-			p++;
-		if (*p == '\0') {
-			p = NULL;
-			continue;
-		}
-		error = ipsecsetup0(af, fd, p, true);
-		if (error < 0)
-			break;
-		p = NULL;
-	}
-
-	free(p0);
-	return error;
-}
-
-int
-ipsecsetup_test(const char *policy)
-{
-	char *p0, *p;
-	char *buf;
-	int error;
-
-	if (policy == NULL)
-		return -1;
-	p0 = p = strdup(policy);
-	if (p == NULL)
-		return -1;
-
-	error = 0;
-	for (;;) {
-		p = strtok(p, ";");
-		if (p == NULL)
-			break;
-		while (isspace((unsigned char)*p))
-			p++;
-		if (*p == '\0') {
-			p = NULL;
-			continue;
-		}
-		buf = ipsec_set_policy(p, (int)strlen(p));
-		if (buf == NULL) {
-			error = -1;
-			break;
-		}
+	npolicy = sap_split(';', -1);
+	buf = NULL;
+	status = 0;
+	for (istr = sap_nstr - npolicy - 1; istr < sap_nstr; ++istr) {
 		free(buf);
-		p = NULL;
+		if ( ( buf = ipsec_set_policy(SAP_STR(istr),
+			SAP_LEN(istr)) ) == NULL ) {
+			status = -1;
+			break;
+		} 
 	}
 
-	free(p0);
-	return error;
+	free(buf);
+	sap_join(';', npolicy);
+
+	return status;
 }
 
 int
-ipsecsetup0(int af, int fd, const char *policy, int commit)
+ipsec_set(sa_family_t af, int fd, const char *ipsec)
 {
-	int level;
-	int opt;
-	char *buf;
-	int error;
+	int	status;
+	int	npolicy;
+	int	istr;
+	int	level, optname;
+	char	*buf;
+
+	if (ipsec == NULL)
+		return 0;
 
 	switch (af) {
 	case AF_INET:
 		level = IPPROTO_IP;
-		opt = IP_IPSEC_POLICY;
+		optname = IP_IPSEC_POLICY;
 		break;
 #ifdef INET6
 	case AF_INET6:
 		level = IPPROTO_IPV6;
-		opt = IPV6_IPSEC_POLICY;
+		optname = IPV6_IPSEC_POLICY;
 		break;
 #endif
 	default:
-		return -1;
+		return 0;
 	}
 
-	buf = ipsec_set_policy(policy, (int)strlen(policy));
-	if (buf != NULL) {
-		error = 0;
-		if (commit && setsockopt(fd, level, opt,
-		    buf, (socklen_t)ipsec_get_policylen(buf)) < 0) {
-			error = -1;
-		}
+	sap_push(ipsec, -1, 0);
+	if (sap_state != SAP_OK)
+		return -1;
+	npolicy = sap_split(';', -1);
+	buf = NULL;
+	status = 0;
+	for (istr = sap_nstr - npolicy - 1; istr < sap_nstr; ++istr) {
 		free(buf);
-	} else
-		error = -1;
-	return error;
+		/* can't failed: verified by parsing */
+		buf = ipsec_set_policy(SAP_STR(istr), SAP_LEN(istr));
+		assert(buf != NULL);
+		if (setsockopt(fd, level, optname, buf,
+			(socklen_t)ipsec_get_policylen(buf)) < 0) {
+			status = -1;
+			break;
+		}	
+	}
+
+	free(buf);
+	sap_join(';', npolicy);
+	sap_pop();
+
+	return status;
 }
 #endif

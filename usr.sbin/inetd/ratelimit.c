@@ -31,13 +31,8 @@
 #include <sys/cdefs.h>
 __RCSID("$NetBSD: ratelimit.c,v 1.2 2021/10/12 22:51:28 rillig Exp $");
 
-#include <sys/queue.h>
 
-#include <arpa/inet.h>
-
-#include <stdio.h>
 #include <stdlib.h>
-#include <syslog.h>
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
@@ -78,10 +73,10 @@ rl_process(struct servtab *sep, int ctrl)
 {
 	time_t now = -1;
 
-	DPRINTF(SERV_FMT ": processing rate-limiting",
+	DPRINTF(SERV_FMT ": processing rate-limiting\n",
 	    SERV_PARAMS(sep));
 	DPRINTF(SERV_FMT ": se_service_max "
-	    "%zu and se_count %zu", SERV_PARAMS(sep),
+	    "%zu and se_count %zu\n", SERV_PARAMS(sep),
 	    sep->se_service_max, sep->se_count);
 
 	if (sep->se_count == 0) {
@@ -94,7 +89,7 @@ rl_process(struct servtab *sep, int ctrl)
 		return -1;
 	}
 
-	DPRINTF(SERV_FMT ": running service ", SERV_PARAMS(sep));
+	DPRINTF(SERV_FMT ": running service\n", SERV_PARAMS(sep));
 
 	/* se_count is only incremented if rl_process will return 0 */
 	sep->se_count++;
@@ -121,10 +116,10 @@ rl_get_name(struct servtab *sep, int ctrl, union addr *out)
 		socklen_t len = sizeof(struct sockaddr_storage);
 		if (getpeername(ctrl, &addr.sa, &len) == -1) {
 			/* error, log it and skip ip rate limiting */
-			syslog(LOG_ERR,
-			    SERV_FMT " failed to get peer name of the "
-			    "connection", SERV_PARAMS(sep));
-			exit(EXIT_FAILURE);
+			my_syslog(LOG_ERR,
+				"%s/%s: failed to get peer name of the connection",
+				SERV_PARAMS(sep));
+			exit(EX_OSERR);
 		}
 		break;
 	}
@@ -139,20 +134,18 @@ rl_get_name(struct servtab *sep, int ctrl, union addr *out)
 		/* Peek so service can still get the packet */
 		count = recvmsg(ctrl, &header, MSG_PEEK);
 		if (count == -1) {
-			syslog(LOG_ERR,
+			my_syslog(LOG_ERR,
 			    "failed to get dgram source address: %s; exiting",
 			    strerror(errno));
-			exit(EXIT_FAILURE);
+			exit(EX_OSERR);
 		}
 		break;
 	}
 	default:
-		DPRINTF(SERV_FMT ": ip_max rate limiting not supported for "
-		    "socktype", SERV_PARAMS(sep));
-		syslog(LOG_ERR, SERV_FMT
-		    ": ip_max rate limiting not supported for socktype",
+		my_syslog(LOG_ERR, SERV_FMT
+			": ip_max rate limiting not supported for socktype",
 		    SERV_PARAMS(sep));
-		exit(EXIT_FAILURE);
+		exit(EX_OSERR);
 	}
 
 	/* Convert addr to to rate limiting address */
@@ -173,11 +166,11 @@ rl_get_name(struct servtab *sep, int ctrl, union addr *out)
 			    NI_NUMERICHOST
 			);
 			if (res != 0) {
-				syslog(LOG_ERR,
-				    SERV_FMT ": failed to get name info of "
+				my_syslog(LOG_ERR, SERV_FMT
+					": failed to get name info of "
 				    "the incoming connection: %s; exiting",
 				    SERV_PARAMS(sep), gai_strerror(res));
-				exit(EXIT_FAILURE);
+				exit(EX_OSERR);
 			}
 			break;
 		}
@@ -212,12 +205,11 @@ rl_drop_connection(struct servtab *sep, int ctrl)
 
 	count = recvmsg(ctrl, &header, 0);
 	if (count == -1) {
-		syslog(LOG_ERR,
-		    SERV_FMT ": failed to consume nowait dgram: %s",
+		my_syslog(LOG_ERR, SERV_FMT ": failed to consume nowait dgram: %s",
 		    SERV_PARAMS(sep), strerror(errno));
-		exit(EXIT_FAILURE);
+		exit(EX_OSERR);
 	}
-	DPRINTF(SERV_FMT ": dropped dgram message",
+	DPRINTF(SERV_FMT ": dropped dgram message\n",
 	    SERV_PARAMS(sep));
 }
 
@@ -226,10 +218,10 @@ rl_time(void)
 {
 	struct timespec ts;
 	if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1) {
-		syslog(LOG_ERR, "clock_gettime for rate limiting failed: %s; "
+		my_syslog(LOG_ERR, "clock_gettime for rate limiting failed: %s; "
 		    "exiting", strerror(errno));
 		/* Exit inetd if rate limiting fails */
-		exit(EXIT_FAILURE);
+		exit(EX_OSERR);
 	}
 	return ts.tv_sec;
 }
@@ -268,9 +260,9 @@ rl_add(struct servtab *sep, union addr *addr)
 		if (errno == ENOMEM) {
 			return NULL;
 		} else {
-			syslog(LOG_ERR, "malloc failed unexpectedly: %s",
+			my_syslog(LOG_ERR, "malloc failed unexpectedly: %s",
 			    strerror(errno));
-			exit(EXIT_FAILURE);
+			exit(EX_RESOURCE);
 		}
 	}
 
@@ -294,7 +286,7 @@ rl_add(struct servtab *sep, union addr *addr)
 	/* initializes 'entries' member to NULL automatically */
 	SLIST_INSERT_HEAD(&sep->se_rl_ip_list, node, entries);
 
-	DPRINTF(SERV_FMT ": add '%s' to rate limit tracking (%zu byte record)",
+	DPRINTF(SERV_FMT ": add '%s' to rate limit tracking (%zu byte record)\n",
  	    SERV_PARAMS(sep), rl_node_tostring(sep, node, buffer), node_size);
 
 	return node;
@@ -303,7 +295,7 @@ rl_add(struct servtab *sep, union addr *addr)
 static void
 rl_reset(struct servtab *sep, time_t now)
 {
-	DPRINTF(SERV_FMT ": %ji seconds passed; resetting rate limiting ",
+	DPRINTF(SERV_FMT ": %ji seconds passed; resetting rate limiting\n",
 	    SERV_PARAMS(sep), (intmax_t)(now - sep->se_time));
 
 	sep->se_count = 0;
@@ -351,14 +343,7 @@ rl_process_service_max(struct servtab *sep, int ctrl, time_t *now)
 		if (*now - sep->se_time > CNT_INTVL) {
 			rl_reset(sep, *now);
 		} else {
-			syslog(LOG_ERR, SERV_FMT
-			    ": max spawn rate (%zu in %ji seconds) "
-			    "already met; closing for %ju seconds",
-			    SERV_PARAMS(sep),
-			    sep->se_service_max,
-			    (intmax_t)CNT_INTVL,
-			    (uintmax_t)RETRYTIME);
-			DPRINTF(SERV_FMT
+			my_syslog(LOG_ERR, SERV_FMT
 			    ": max spawn rate (%zu in %ji seconds) "
 			    "already met; closing for %ju seconds",
 			    SERV_PARAMS(sep),
@@ -369,7 +354,7 @@ rl_process_service_max(struct servtab *sep, int ctrl, time_t *now)
 			rl_drop_connection(sep, ctrl);
 
 			/* Close the server for 10 minutes */
-			close_sep(sep);
+			sep_close(sep);
 			if (!timingout) {
 				timingout = true;
 				alarm(RETRYTIME);
@@ -394,7 +379,7 @@ rl_process_ip_max(struct servtab *sep, int ctrl, time_t *now) {
 			node = rl_add(sep, &addr);
 			if (node == NULL) {
 				/* If rl_add can't allocate, reject request */
-				DPRINTF("Cannot allocate rl_ip_node");
+				DPRINTF("Cannot allocate rl_ip_node\n");
 				return false;
 			}
 		}
@@ -409,7 +394,7 @@ rl_process_ip_max(struct servtab *sep, int ctrl, time_t *now) {
 #endif
 
 		DPRINTF(
-		    SERV_FMT ": se_ip_max %zu and ip_count %zu",
+		    SERV_FMT ": se_ip_max %zu and ip_count %zu\n",
 		    SERV_PARAMS(sep), sep->se_ip_max, node->count);
 
 		if (node->count >= sep->se_ip_max) {
@@ -421,7 +406,7 @@ rl_process_ip_max(struct servtab *sep, int ctrl, time_t *now) {
 				rl_reset(sep, *now);
 				node = rl_add(sep, &addr);
 				if (node == NULL) {
-					DPRINTF("Cannot allocate rl_ip_node");
+					DPRINTF("Cannot allocate rl_ip_node\n");
 					return false;
 				}
 			} else {
@@ -434,7 +419,7 @@ rl_process_ip_max(struct servtab *sep, int ctrl, time_t *now) {
 					rl_log_address_exceed(sep, node);
 				} else {
 					DPRINTF(SERV_FMT
-					    ": service not started",
+					    ": service not started\n",
 					    SERV_PARAMS(sep));
 				}
 
@@ -523,7 +508,7 @@ static void
 rl_print_found_node(struct servtab *sep, struct rl_ip_node *node)
 {
 	char buffer[NI_MAXHOST];
-	DPRINTF(SERV_FMT ": found record for address '%s'",
+	DPRINTF(SERV_FMT ": found record for address '%s'\n",
 	    SERV_PARAMS(sep), rl_node_tostring(sep, node, buffer));
 }
 #endif
@@ -534,17 +519,7 @@ rl_log_address_exceed(struct servtab *sep, struct rl_ip_node *node)
 {
 	char buffer[NI_MAXHOST];
 	const char * name = rl_node_tostring(sep, node, buffer);
-	syslog(LOG_ERR, SERV_FMT
-	    ": max ip spawn rate (%zu in "
-	    "%ji seconds) for "
-	    "'%." TOSTRING(NI_MAXHOST) "s' "
-	    "already met; service not started",
-	    SERV_PARAMS(sep),
-	    sep->se_ip_max,
-	    (intmax_t)CNT_INTVL,
-	    name);
-	DPRINTF(SERV_FMT
-	    ": max ip spawn rate (%zu in "
+	syslog(LOG_ERR, "%s/%s: max ip spawn rate (%zu in "
 	    "%ji seconds) for "
 	    "'%." TOSTRING(NI_MAXHOST) "s' "
 	    "already met; service not started",
