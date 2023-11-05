@@ -51,6 +51,10 @@ pick_mode_by_dotclock(int width, int height, int dotclock)
 	    height, dotclock);
 	for (i = 0; i < videomode_count; i++) {
 		this = &videomode_list[i];
+
+		/* For now, skip Reduced Blanking entries [TL] */
+		if (this->flags & VID_REDUCEDBLANKING) continue;
+
 		if ((this->hdisplay != width) || (this->vdisplay != height) ||
 		    (this->dot_clock > dotclock))
 			continue;
@@ -77,6 +81,10 @@ pick_mode_by_ref(int width, int height, int refresh)
 	for (i = 0; i < videomode_count; i++) {
 
 		this = &videomode_list[i];
+
+		/* For now, skip Reduced Blanking entries [TL] */
+		if (this->flags & VID_REDUCEDBLANKING) continue;
+
 		mref = this->dot_clock * 1000 / (this->htotal * this->vtotal);
 		diff = abs(mref - refresh);
 		if ((this->hdisplay != width) || (this->vdisplay != height))

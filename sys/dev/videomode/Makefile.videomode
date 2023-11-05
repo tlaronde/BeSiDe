@@ -2,16 +2,22 @@
 #
 # As per tron@NetBSD.org, the proper procedure is
 #
-# 1.) Change "src/sys/dev/videomode/modelines".
-# 2.) Commit "src/sys/dev/videomode/modelines".
+# 1.) Change "src/sys/dev/videomode/dmt" and/or
+#   "src/sys/dev/videomode/extradmt".
+# 2.) Commit the above files changed.
 # 3.) Execute "make -f Makefile.videomode" in "src/sys/dev/videomode".
 # 4.) Commit "src/sys/dev/videomode/videomode.c"
 
 .include <bsd.own.mk>
 
-videomode.c: modelines modelines2c.awk
+# We put the extra modes first simply because they are Established
+# timings: let them be found the more rapidly. No other sorting done.
+#
+DMTSOURCES = extradmt dmt
+
+videomode.c: dmt extradmt dmt2c.awk
 	/bin/rm -f videomode.c
-	${TOOL_AWK} -f modelines2c.awk modelines > videomode.c
+	/bin/cat $(DMTSOURCES) | ${TOOL_AWK} -v DMTSOURCES="$(DMTSOURCES)" -f dmt2c.awk > videomode.c
 
 test: videomode.c videomode.h test.c
 	${CC} -I ../../ -o test test.c videomode.c
