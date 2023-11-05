@@ -1,56 +1,14 @@
-NetBSD
-======
+WHAT IS THERE
+=============
 
-NetBSD is a free, fast, secure, and highly portable Unix-like Open
-Source operating system.  It is available for a [wide range of
-platforms](https://wiki.NetBSD.org/ports/), from large-scale servers
-and powerful desktop systems to handheld and embedded devices.
+This is a fork of the NETBSD src tree providing on different branches some work I (Thierry Laronde [TL]) have done on various subjects.
 
-Building
---------
+The main branch is named: tsjl
 
-You can cross-build NetBSD from most UNIX-like operating systems.
-To build for amd64 (x86_64), in the src directory:
+On this branch, at the root of the tree:
 
-    ./build.sh -U -u -j4 -m amd64 -O ~/obj release
+CHANGES.tsjl        Gives a summary of the main changes, separated between kernel related work and userland work;
 
-Additional build information available in the [BUILDING](BUILDING) file.
+WIP.tsjl            Gives a summary of what is in progress immediately (not yet published);
 
-Binaries
---------
-
-- [Daily builds](https://nycdn.NetBSD.org/pub/NetBSD-daily/HEAD/latest/)
-- [Releases](https://cdn.NetBSD.org/pub/NetBSD/)
-
-Testing
--------
-
-On a running NetBSD system:
-
-    cd /usr/tests; atf-run | atf-report
-
-Troubleshooting
----------------
-
-- Send bugs and patches [via web form](https://www.NetBSD.org/cgi-bin/sendpr.cgi?gndb=netbsd).
-- Subscribe to the [mailing lists](https://www.NetBSD.org/mailinglists/).
-  The [netbsd-users](https://www.NetBSD.org/mailinglists/#netbsd-users) list is a good choice for many problems; watch [current-users](https://www.NetBSD.org/mailinglists/#current-users) if you follow the bleeding edge of NetBSD-current.
-- Join the community IRC channel [#netbsd @ libera.chat](https://web.libera.chat/#netbsd).
-
-Latest sources
---------------
-
-To fetch the main CVS repository:
-
-    cvs -d anoncvs@anoncvs.NetBSD.org:/cvsroot checkout -P src
-
-To work in the Git mirror, which is updated every few hours from CVS:
-
-    git clone https://github.com/NetBSD/src.git
-
-Additional Links
-----------------
-
-- [The NetBSD Guide](https://www.NetBSD.org/docs/guide/en/)
-- [NetBSD manual pages](https://man.NetBSD.org/)
-- [NetBSD Cross-Reference](https://nxr.NetBSD.org/)
+GOALS.tsjl          Gives a summary of the goals and links to further documentation outside the main src tree.
