@@ -71,126 +71,59 @@ __RCSID("$NetBSD: inetd.c,v 1.141 2022/08/10 08:37:53 christos Exp $");
 #endif /* not lint */
 
 /*
- * Inetd - Internet super-server
+ * This was added in June 2023 by Thierry Laronde [TL], when reviewing
+ * the code.
  *
- * This program invokes all internet services as needed.  Connection-oriented
- * services are invoked each time a connection is made, by creating a process.
- * This process is passed the connection as file descriptor 0 and is expected
- * to do a getpeername to find out the source host and port.
+ * The Application User Interface: what does the program, how it has to
+ * be invoked and what is its result is described in the man page
+ * inetd.8. This is the contract to respect and what is in it is not
+ * repeated here. And whatever discrepancy between the man page (the
+ * contract) and the implementation is a bug. This man page has to be
+ * kept constantly as reference.
  *
- * Datagram oriented services are invoked when a datagram
- * arrives; a process is created and passed a pending message
- * on file descriptor 0.  Datagram servers may either connect
- * to their peer, freeing up the original socket for inetd
- * to receive further messages on, or ``take over the socket'',
- * processing all arriving datagrams and, eventually, timing
- * out.	 The first type of server is said to be ``multi-threaded'';
- * the second type of server ``single-threaded''.
+ * The general style is not re-stated here and is mandatory.
  *
- * Inetd uses a configuration file which is read at startup
- * and, possibly, at some later time in response to a hangup signal.
- * The configuration file is ``free format'' with fields given in the
- * order shown below.  Continuation lines for an entry must being with
- * a space or tab.  All fields must be present in each entry.
+ * Here are only implementation precisions: how we achieve the
+ * contract.
  *
- *	service name			must be in /etc/services or must
- *					name a tcpmux service
- *	socket type[:accf[,arg]]	stream/dgram/raw/rdm/seqpacket,
-					only stream can name an accept filter
- *	protocol			must be in /etc/protocols
- *	wait/nowait[:max]		single-threaded/multi-threaded, max #
- *	user[:group]			user/group to run daemon as
- *	server program			full path name
- *	server program arguments	maximum of MAXARGV (64)
+ * The pieces of the implementation:
  *
- * For RPC services
- *	service name/version		must be in /etc/rpc
- *	socket type			stream/dgram/raw/rdm/seqpacket
- *	protocol			must be in /etc/protocols
- *	wait/nowait[:max]		single-threaded/multi-threaded
- *	user[:group]			user to run daemon as
- *	server program			full path name
- *	server program arguments	maximum of MAXARGV (64)
+ *	- inetd.c __dead: [this very file] The entry point with all the
+ *		flow of the	program, and the general execution: the module
+ *		that _does_; and the only place with ratelimit where the
+ *		program exits;
+ *	- parse.c: translating the configuration file in services;
+ *	- ipsec.c: de dicto: subr related to ipsec security rules;
+ *	- ratelimit.c: subr for the implementation of rate limitation;
+ *		this is for childs, that may exit;
+ *	- pathnames.h: de dicto: the definition of the absolute pathnames of
+ *		the default config file and the fallback one;
+ *	- inetd.h: the declarations or macro definitions shared between the
+ *		pieces. 
  *
- * For non-RPC services, the "service name" can be of the form
- * hostaddress:servicename, in which case the hostaddress is used
- * as the host portion of the address to listen on.  If hostaddress
- * consists of a single `*' character, INADDR_ANY is used.
+ * Inetd.c and ratelimit.c exit with an error code defined by sysexits(3).
  *
- * A line can also consist of just
- *	hostaddress:
- * where hostaddress is as in the preceding paragraph.  Such a line must
- * have no further fields; the specified hostaddress is remembered and
- * used for all further lines that have no hostaddress specified,
- * until the next such line (or EOF).  (This is why * is provided to
- * allow explicit specification of INADDR_ANY.)  A line
- *	*:
- * is implicitly in effect at the beginning of the file.
+ * Depending on the function (checker or server) and the mode
+ * (foreground or daemonized) messages go to stdout (the config), stderr
+ * or are logged by syslog(3).
+ * To print to the correct channel, we use macros.
+ * DPRINTF prints only on stderr and adds a trailing '\n' and may
+ * print only if debug is on and if the debugging code has been
+ * compiled in.
+ * my_syslog prints whether via syslog(3) or to stdout or stderr
+ * depending on the definition of the boolean syslogging and the
+ * priority. It is not dependent upon debugging code been compiled in
+ * or not.
  *
- * The hostaddress specifier may (and often will) contain dots;
- * the service name must not.
- *
- * For RPC services, host-address specifiers are accepted and will
- * work to some extent; however, because of limitations in the
- * portmapper interface, it will not work to try to give more than
- * one line for any given RPC service, even if the host-address
- * specifiers are different.
- *
- * TCP services without official port numbers are handled with the
- * RFC1078-based tcpmux internal service. Tcpmux listens on port 1 for
- * requests. When a connection is made from a foreign host, the service
- * requested is passed to tcpmux, which looks it up in the servtab list
- * and returns the proper entry for the service. Tcpmux returns a
- * negative reply if the service doesn't exist, otherwise the invoked
- * server is expected to return the positive reply if the service type in
- * inetd.conf file has the prefix "tcpmux/". If the service type has the
- * prefix "tcpmux/+", tcpmux will return the positive reply for the
- * process; this is for compatibility with older server code, and also
- * allows you to invoke programs that use stdin/stdout without putting any
- * special server code in them. Services that use tcpmux are "nowait"
- * because they do not have a well-known port and hence cannot listen
- * for new requests.
- *
- * Comment lines are indicated by a `#' in column 1.
- *
- * #ifdef IPSEC
- * Comment lines that start with "#@" denote IPsec policy string, as described
- * in ipsec_set_policy(3).  This will affect all the following items in
- * inetd.conf(8).  To reset the policy, just use "#@" line.  By default,
- * there's no IPsec policy.
- * #endif
+ * my_syslog() is for informations that have to be sent/recorded.
+ * DPRINTF is for supplementary informations.
  */
-
-/*
- * Here's the scoop concerning the user:group feature:
- *
- * 1) set-group-option off.
- *
- * 	a) user = root:	NO setuid() or setgid() is done
- *
- * 	b) other:	setuid()
- * 			setgid(primary group as found in passwd)
- * 			initgroups(name, primary group)
- *
- * 2) set-group-option on.
- *
- * 	a) user = root:	NO setuid()
- * 			setgid(specified group)
- * 			NO initgroups()
- *
- * 	b) other:	setuid()
- * 			setgid(specified group)
- * 			initgroups(name, specified group)
- *
- */
-
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <sys/resource.h>
 #include <sys/event.h>
-#include <sys/socket.h>
 #include <sys/queue.h>
 
 #include <ctype.h>
@@ -200,12 +133,12 @@ __RCSID("$NetBSD: inetd.c,v 1.141 2022/08/10 08:37:53 christos Exp $");
 #include <glob.h>
 #include <grp.h>
 #include <libgen.h>
+#include <locale.h>
 #include <pwd.h>
 #include <signal.h>
-#include <stdio.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include <unistd.h>
 #include <util.h>
 #include <ifaddrs.h>
@@ -230,10 +163,33 @@ int allow_severity = LIBWRAP_ALLOW_FACILITY|LIBWRAP_ALLOW_SEVERITY;
 int deny_severity = LIBWRAP_DENY_FACILITY|LIBWRAP_DENY_SEVERITY;
 #endif
 
-static bool foreground;
-int	debug;
+#ifdef DEBUG_ENABLE
+#define DEBUG_FLAG	"[-d] "
+#define DEBUG_KEY	"d"
+#else
+#define DEBUG_FLAG
+#define DEBUG_KEY
+#endif
+
+#define USAGE_CHECKER	"-c " DEBUG_FLAG "[absolute_config_pathname]"
+
 #ifdef LIBWRAP
-int	lflag;
+#define USAGE_SERVER	"[-l] [-rs] [-f " DEBUG_FLAG "] [absolute_config_pathname]"
+#define OPT_KEYS	"c" DEBUG_KEY "flrs"
+#else
+#define USAGE_SERVER	"[-rs] [-f " DEBUG_FLAG "] [absolute_config_pathname]"
+#define OPT_KEYS	"c" DEBUG_KEY "frs"
+#endif /* LIBWRAP */
+
+char const 	*myname = "inetd";
+bool	checker;	/* -c opt */
+static int	resilient;	/* -r opt */
+static bool	foreground;	/* server: if -f; checker: always */
+bool	debug;	/* has effect only in foreground mode */
+bool	strict;	/* strict checking of config file perms; server only */
+bool	syslogging;	/* root enough to syslog */
+#ifdef LIBWRAP
+bool	lflag;
 #endif
 int	maxsock;
 int	kq;
@@ -254,13 +210,21 @@ struct rlimit	rlim_ofile;
 struct kevent	changebuf[64];
 size_t		changes;
 
-struct servtab *servtab;
+/*
+ * THE configuration: its pathname is the one constantly used when
+ * loading or reloading. The fallback is only a one shot switch.
+ * This is CONSTANT once defined at start time! [TL]
+ */
+static const char	*CONFIG = _PATH_INETDCONF;
+
+static struct servtab	*served;
 
 static ssize_t	recvfromto(int, void * restrict, size_t, int,
     struct sockaddr * restrict, socklen_t * restrict,
     struct sockaddr * restrict, socklen_t * restrict);
 static ssize_t	sendfromto(int, const void *, size_t, int,
     const struct sockaddr *, socklen_t, const struct sockaddr *, socklen_t);
+static void	cfg_unserve(void);
 static void	chargen_dg(int, struct servtab *);
 static void	chargen_stream(int, struct servtab *);
 static void	daytime_dg(int, struct servtab *);
@@ -269,14 +233,14 @@ static void	discard_dg(int, struct servtab *);
 static void	discard_stream(int, struct servtab *);
 static void	echo_dg(int, struct servtab *);
 static void	echo_stream(int, struct servtab *);
-__dead static void	goaway(void);
 static void	machtime_dg(int, struct servtab *);
 static void	machtime_stream(int, struct servtab *);
 static void	reapchild(void);
 static void	retry(void);
 static void	run_service(int, struct servtab *, int);
+static void	setup(struct servtab *);
 static void	tcpmux(int, struct servtab *);
-__dead static void	usage(void);
+static void	usage(void) __dead;
 static void	bump_nofile(void);
 static void	inetd_setproctitle(char *, int);
 static void	initring(void);
@@ -328,29 +292,43 @@ u_int16_t bad_ports[] =  { 7, 9, 13, 19, 37, 0 };
 
 
 #define NUMINT	(sizeof(intab) / sizeof(struct inent))
-const char	*CONFIG = _PATH_INETDCONF;
 
 static int my_signals[] =
-    { SIGALRM, SIGHUP, SIGCHLD, SIGTERM, SIGINT, SIGPIPE };
+    { SIGALRM, SIGHUP, SIGUSR1, SIGCHLD, SIGTERM, SIGINT, SIGPIPE };
+
+/*
+ * Inetd - Internet super-server. Please read inetd.8.
+ */
 
 int
 main(int argc, char *argv[])
 {
-	int		ch, n, reload = 1;
+	int		status;
+	int		ch, n;
+	bool	reload, fallback, initialfb;
 
-	while ((ch = getopt(argc, argv,
-#ifdef LIBWRAP
-					"dfl"
-#else
-					"df"
-#endif
-					   )) != -1)
+	/*
+ 	 * C locale.
+	 */
+	(void)setlocale(LC_ALL, "C");	
+
+	checker = false;
+	debug = false;
+	strict = false;
+	reload = true;	/* In the loop, load initial config. */
+	fallback = false;	/* By default, don't fallback; */
+	initialfb = true;	/* but automatically fallback only once. */
+
+	while ((ch = getopt(argc, argv, OPT_KEYS)) != -1)
 		switch(ch) {
-		case 'd':
+		case 'c':
+			checker = true;
 			foreground = true;
+			break;
+		case 'd':
 			debug = true;
 			options |= SO_DEBUG;
-			break;
+			/* FALLTHROUGH */
 		case 'f':
 			foreground = true;
 			break;
@@ -359,29 +337,108 @@ main(int argc, char *argv[])
 			lflag = true;
 			break;
 #endif
+		case 'r':
+			resilient = true;
+			break;
+		case 's':
+			strict = true;
+			break;
 		case '?':
 		default:
 			usage();
+			/* NOTREACHED */
 		}
 	argc -= optind;
 	argv += optind;
 
-	if (argc > 0)
+	/*
+	 * Don't let user think there could be a series of alternate
+	 * config files as argument. This is EX_USAGE. [TL]
+     */
+	if (argc > 1)
+		usage();
+	else if (argc)
 		CONFIG = argv[0];
 
-	if (!foreground)
-		daemon(0, 0);
-	openlog("inetd", LOG_PID | LOG_NOWAIT, LOG_DAEMON);
-	pidfile(NULL);
+	/*
+	 * An imperative: the config file shall be rooted.
+	 */
+	if (CONFIG[0] != '/') {
+		(void)fprintf(stderr, "%s is not an absolute pathname\n", CONFIG);
+		return (EX_USAGE);
+	}
+
+	/*
+	 * CHECKER functional mode.
+	 */
+	if (checker) {
+		struct servtab *sep;
+
+		sep = NULL;
+
+		status = config(CONFIG, &sep);
+
+		if (debug  && status == EX_OK)
+			cfg_print(sep);
+				
+		return (status);
+	}
+
+	/*
+	 * SERVER functional mode.
+	 */
+	assert(!checker);
+
+	if (!foreground) {
+		if (daemon(0, 0) < 0)
+			return (EX_OSERR);
+	}
+
+	/*
+	 * XXX We rely here on a side effect and on the correct permissions
+	 * of /var/run/: only root shall be able to write there. If a lock
+	 * already exists, we infer from the permissions on /var/run/ that
+	 * only root has been able to write such a lock file here and
+	 * hence that another process in server function is running as root.
+	 *
+	 * If the function returns -1, this is a permission problem (the
+	 * present server process is not running as root).
+	 * We let the process continue; not lock is written so it can block
+	 * a root server, but it will fail if it tries to handle privileged
+	 * services. Why letting it go? Because this feature could be used
+	 * to test with the builtins.
+	 *
+	 * Hence, we write to syslog only if the daemon is a root one
+	 * and if not in foreground.
+	 */
+	{
+		pid_t pid;
+
+		pid = pidfile_lock(NULL);
+
+		errno = 0;
+		if (pid >= 0) { /* able to write so root -> syslog */
+			if (!foreground) {
+				openlog("inetd", LOG_PID | LOG_NOWAIT,
+					LOG_DAEMON);
+				syslogging = true;
+			}
+		}
+		if (pid > 0) { /* root but second: we exit */
+			my_syslog(LOG_ERR, "already running as root as %d",
+				pid);
+			return (EX_TEMPFAIL); /* not seen if daemon */			
+		}
+	}
 
 	kq = kqueue();
 	if (kq < 0) {
-		syslog(LOG_ERR, "kqueue: %m");
-		return (EXIT_FAILURE);
+		my_syslog(LOG_ERR, "kqueue: %s", strerror(errno));
+		return (EX_OSERR);
 	}
 
 	if (getrlimit(RLIMIT_NOFILE, &rlim_ofile) < 0) {
-		syslog(LOG_ERR, "getrlimit: %m");
+		my_syslog(LOG_ERR, "getrlimit: %s", strerror(errno));
 	} else {
 		rlim_ofile_cur = rlim_ofile.rlim_cur;
 		if (rlim_ofile_cur == RLIM_INFINITY)	/* ! */
@@ -411,7 +468,45 @@ main(int argc, char *argv[])
 
 		if (reload) {
 			reload = false;
-			config_root();
+			sep = NULL;	/* assertion in parse.c: don't overwrite */
+			status = config(CONFIG, &sep);
+			if (status != EX_OK) {
+				if (resilient) {
+					my_syslog(LOG_WARNING, "dropping config");
+					if (initialfb) {
+						initialfb = false;
+						fallback = true;
+					} else
+						my_syslog(LOG_WARNING, "keeping current services");
+				} else {
+					my_syslog(LOG_ERR, "exiting on configuration error");
+					return status;
+				}
+			} else { /* new config OK */
+				cfg_unserve();
+				cfg_drop(served);
+				served = sep;
+				retry();
+			}
+		}
+
+		if (fallback) {
+			fallback = false;
+			my_syslog(LOG_WARNING, "fallbacking...");
+			sep = NULL;	/* assertion in parse.c: don't overwrite */
+			status = config(_PATH_INETDFBAKCONF, &sep);
+			if (status != EX_OK) {
+				if (!resilient) {
+					my_syslog(LOG_ERR, "exiting on configuration error");
+					return status;
+				} else
+					my_syslog(LOG_WARNING, "keeping current services");
+			} else { /* servicing fallback */
+				cfg_unserve();
+				cfg_drop(served);
+				served = sep;
+				retry();
+			}
 		}
 
 		n = my_kevent(changebuf, changes, eventbuf, __arraycount(eventbuf));
@@ -428,10 +523,15 @@ main(int argc, char *argv[])
 					break;
 				case SIGTERM:
 				case SIGINT:
-					goaway();
+					cfg_unserve();
+					my_syslog(LOG_WARNING, "quitting on signal received");
+					return (EX_OK);
 					break;
 				case SIGHUP:
 					reload = true;
+					break;
+				case SIGUSR1:
+					fallback = true;
 					break;
 				}
 				continue;
@@ -450,9 +550,9 @@ main(int argc, char *argv[])
 				    SERV_PARAMS(sep), ctrl);
 				if (ctrl < 0) {
 					if (errno != EINTR)
-						syslog(LOG_WARNING,
-						    SERV_FMT ": accept: %m",
-						    SERV_PARAMS(sep));
+						my_syslog(LOG_WARNING,
+						    SERV_FMT ": accept: %s",
+						    SERV_PARAMS(sep), strerror(errno));
 					continue;
 				}
 			} else
@@ -480,7 +580,7 @@ spawn(struct servtab *sep, int ctrl)
 		}
 		pid = fork();
 		if (pid < 0) {
-			syslog(LOG_ERR, "fork: %m");
+			my_syslog(LOG_ERR, "fork: %s", strerror(errno));
 			if (sep->se_wait == 0 && sep->se_socktype == SOCK_STREAM)
 				close(ctrl);
 			sleep(1);
@@ -507,7 +607,7 @@ spawn(struct servtab *sep, int ctrl)
 	if (pid == 0) {
 		run_service(ctrl, sep, dofork);
 		if (dofork)
-			exit(EXIT_SUCCESS);
+			exit(EX_OK);
 	}
 	if (sep->se_wait == 0 && sep->se_socktype == SOCK_STREAM)
 		close(ctrl);
@@ -553,22 +653,44 @@ run_service(int ctrl, struct servtab *sep, int didfork)
 			}
 		}
 		if (denied) {
-			syslog(deny_severity,
+			my_syslog(deny_severity,
 			    "refused connection from %.500s(%s), service %s (%s)",
 			    eval_client(&req), abuf, service, sep->se_proto);
 			goto reject;
 		}
 		if (lflag) {
-			syslog(allow_severity,
+			my_syslog(allow_severity,
 			    "connection from %.500s(%s), service %s (%s)",
 			    eval_client(&req), abuf, service, sep->se_proto);
 		}
 	}
 #endif /* LIBWRAP */
 
+/*
+ * Here's the scoop concerning the user:group feature:
+ *
+ * 1) set-group-option off.
+ *
+ * 	a) user = root:	NO setuid() or setgid() is done
+ *
+ * 	b) other:	setuid()
+ * 			setgid(primary group as found in passwd)
+ * 			initgroups(name, primary group)
+ *
+ * 2) set-group-option on.
+ *
+ * 	a) user = root:	NO setuid()
+ * 			setgid(specified group)
+ * 			NO initgroups()
+ *
+ * 	b) other:	setuid()
+ * 			setgid(specified group)
+ * 			initgroups(name, specified group)
+ *
+ */
 	if (sep->se_bi != NULL) {
 		if (didfork) {
-			for (s = servtab; s != NULL; s = s->se_next)
+			for (s = served; s != NULL; s = s->se_next)
 				if (s->se_fd != -1 && s->se_fd != ctrl) {
 					close(s->se_fd);
 					s->se_fd = -1;
@@ -577,13 +699,13 @@ run_service(int ctrl, struct servtab *sep, int didfork)
 		(*sep->se_bi->bi_fn)(ctrl, sep);
 	} else {
 		if ((pwd = getpwnam(sep->se_user)) == NULL) {
-			syslog(LOG_ERR, "%s/%s: %s: No such user",
+			my_syslog(LOG_ERR, "%s/%s: %s: No such user",
 			    sep->se_service, sep->se_proto, sep->se_user);
 			goto reject;
 		}
 		if (sep->se_group != NULL &&
 		    (grp = getgrnam(sep->se_group)) == NULL) {
-			syslog(LOG_ERR, "%s/%s: %s: No such group",
+			my_syslog(LOG_ERR, "%s/%s: %s: No such group",
 			    sep->se_service, sep->se_proto, sep->se_group);
 			goto reject;
 		}
@@ -591,17 +713,17 @@ run_service(int ctrl, struct servtab *sep, int didfork)
 			if (sep->se_group != NULL)
 				pwd->pw_gid = grp->gr_gid;
 			if (setgid(pwd->pw_gid) < 0) {
-				syslog(LOG_ERR,
-				 "%s/%s: can't set gid %d: %m", sep->se_service,
-				    sep->se_proto, pwd->pw_gid);
+				my_syslog(LOG_ERR,
+				 "%s/%s: can't set gid %d: %s", sep->se_service,
+				    sep->se_proto, pwd->pw_gid, strerror(errno));
 				goto reject;
 			}
 			(void) initgroups(pwd->pw_name,
 			    pwd->pw_gid);
 			if (setuid(pwd->pw_uid) < 0) {
-				syslog(LOG_ERR,
-				 "%s/%s: can't set uid %d: %m", sep->se_service,
-				    sep->se_proto, pwd->pw_uid);
+				my_syslog(LOG_ERR,
+				 "%s/%s: can't set uid %d: %s", sep->se_service,
+				    sep->se_proto, pwd->pw_uid, strerror(errno));
 				goto reject;
 			}
 		} else if (sep->se_group != NULL) {
@@ -611,7 +733,8 @@ run_service(int ctrl, struct servtab *sep, int didfork)
 		    getpid(), sep->se_server);
 		/* Set our control descriptor to not close-on-exec... */
 		if (fcntl(ctrl, F_SETFD, 0) < 0)
-			syslog(LOG_ERR, "fcntl (%d, F_SETFD, 0): %m", ctrl);
+			my_syslog(LOG_ERR, "fcntl (%d, F_SETFD, 0): %s", ctrl,
+				strerror(errno));
 		/* ...and dup it to stdin, stdout, and stderr. */
 		if (ctrl != 0) {
 			dup2(ctrl, 0);
@@ -622,13 +745,14 @@ run_service(int ctrl, struct servtab *sep, int didfork)
 		dup2(0, 2);
 		if (rlim_ofile.rlim_cur != rlim_ofile_cur &&
 		    setrlimit(RLIMIT_NOFILE, &rlim_ofile) < 0)
-			syslog(LOG_ERR, "setrlimit: %m");
+			my_syslog(LOG_ERR, "setrlimit: %s", strerror(errno));
 		execv(sep->se_server, sep->se_argv);
-		syslog(LOG_ERR, "cannot execute %s: %m", sep->se_server);
+		my_syslog(LOG_ERR, "cannot execute %s: %s", sep->se_server,
+			strerror(errno));
 	reject:
 		if (sep->se_socktype != SOCK_STREAM)
 			recv(ctrl, buf, sizeof (buf), 0);
-		_exit(EXIT_FAILURE);
+		_exit(EX_OSERR);
 	}
 }
 
@@ -644,16 +768,16 @@ reapchild(void)
 		if (pid <= 0)
 			break;
 		DPRINTF("%d reaped, status %#x", pid, status);
-		for (sep = servtab; sep != NULL; sep = sep->se_next)
+		for (sep = served; sep != NULL; sep = sep->se_next)
 			if (sep->se_wait == pid) {
 				struct kevent	*ev;
 
 				if (WIFEXITED(status) && WEXITSTATUS(status))
-					syslog(LOG_WARNING,
+					my_syslog(LOG_WARNING,
 					    "%s: exit status %u",
 					    sep->se_server, WEXITSTATUS(status));
 				else if (WIFSIGNALED(status))
-					syslog(LOG_WARNING,
+					my_syslog(LOG_WARNING,
 					    "%s: exit signal %u",
 					    sep->se_server, WTERMSIG(status));
 				sep->se_wait = 1;
@@ -672,7 +796,7 @@ retry(void)
 	struct servtab *sep;
 
 	timingout = false;
-	for (sep = servtab; sep != NULL; sep = sep->se_next) {
+	for (sep = served; sep != NULL; sep = sep->se_next) {
 		if (sep->se_fd == -1 && !ISMUX(sep)) {
 			switch (sep->se_family) {
 			case AF_LOCAL:
@@ -687,14 +811,17 @@ retry(void)
 			}
 		}
 	}
+	cfg_print(served);
 }
 
 static void
-goaway(void)
+cfg_unserve(void)
 {
 	struct servtab *sep;
 
-	for (sep = servtab; sep != NULL; sep = sep->se_next) {
+	if (served == NULL) return; /* nothing to unserve */
+
+	for (sep = served; sep != NULL; sep = sep->se_next) {
 		if (sep->se_fd == -1)
 			continue;
 
@@ -713,13 +840,9 @@ goaway(void)
 		(void)close(sep->se_fd);
 		sep->se_fd = -1;
 	}
-
-	DPRINTF("Going away.");
-
-	exit(EXIT_SUCCESS);
 }
 
-void
+static void
 setup(struct servtab *sep)
 {
 	int		on = 1;
@@ -731,14 +854,14 @@ setup(struct servtab *sep)
 	if ((sep->se_fd = socket(sep->se_family, sep->se_socktype, 0)) < 0) {
 		DPRINTF("socket failed on " SERV_FMT ": %s",
 		    SERV_PARAMS(sep), strerror(errno));
-		syslog(LOG_ERR, "%s/%s: socket: %m",
-		    sep->se_service, sep->se_proto);
+		my_syslog(LOG_ERR, "%s/%s: socket: %s",
+		    sep->se_service, sep->se_proto, strerror(errno));
 		return;
 	}
 	/* Set all listening sockets to close-on-exec. */
 	if (fcntl(sep->se_fd, F_SETFD, FD_CLOEXEC) < 0) {
-		syslog(LOG_ERR, SERV_FMT ": fcntl(F_SETFD, FD_CLOEXEC): %m",
-		    SERV_PARAMS(sep));
+		my_syslog(LOG_ERR, SERV_FMT ": fcntl(F_SETFD, FD_CLOEXEC): %s",
+		    SERV_PARAMS(sep), strerror(errno));
 		close(sep->se_fd);
 		sep->se_fd = -1;
 		return;
@@ -748,48 +871,45 @@ setup(struct servtab *sep)
 setsockopt(fd, SOL_SOCKET, opt, &on, (socklen_t)sizeof(on))
 	if (strcmp(sep->se_proto, "tcp") == 0 && (options & SO_DEBUG) &&
 	    turnon(sep->se_fd, SO_DEBUG) < 0)
-		syslog(LOG_ERR, "setsockopt (SO_DEBUG): %m");
+		my_syslog(LOG_ERR, "setsockopt (SO_DEBUG): %s", strerror(errno));
 	if (turnon(sep->se_fd, SO_REUSEADDR) < 0)
-		syslog(LOG_ERR, "setsockopt (SO_REUSEADDR): %m");
+		my_syslog(LOG_ERR, "setsockopt (SO_REUSEADDR): %s", strerror(errno));
 #undef turnon
 
 	/* Set the socket buffer sizes, if specified. */
 	if (sep->se_sndbuf != 0 && setsockopt(sep->se_fd, SOL_SOCKET,
 	    SO_SNDBUF, &sep->se_sndbuf, (socklen_t)sizeof(sep->se_sndbuf)) < 0)
-		syslog(LOG_ERR, "setsockopt (SO_SNDBUF %d): %m",
-		    sep->se_sndbuf);
+		my_syslog(LOG_ERR, "setsockopt (SO_SNDBUF %d): %s",
+		    sep->se_sndbuf, strerror(errno));
 	if (sep->se_rcvbuf != 0 && setsockopt(sep->se_fd, SOL_SOCKET,
 	    SO_RCVBUF, &sep->se_rcvbuf, (socklen_t)sizeof(sep->se_rcvbuf)) < 0)
-		syslog(LOG_ERR, "setsockopt (SO_RCVBUF %d): %m",
-		    sep->se_rcvbuf);
+		my_syslog(LOG_ERR, "setsockopt (SO_RCVBUF %d): %s",
+		    sep->se_rcvbuf, strerror(errno));
 #ifdef INET6
 	if (sep->se_family == AF_INET6) {
 		int *v;
 		v = (sep->se_type == FAITH_TYPE) ? &on : &off;
 		if (setsockopt(sep->se_fd, IPPROTO_IPV6, IPV6_FAITH,
 		    v, (socklen_t)sizeof(*v)) < 0)
-			syslog(LOG_ERR, "setsockopt (IPV6_FAITH): %m");
+			my_syslog(LOG_ERR, "setsockopt (IPV6_FAITH): %s",
+				strerror(errno));
 	}
 #endif
 #ifdef IPSEC
-	/* Avoid setting a policy if a policy specifier doesn't exist. */
-	if (sep->se_policy != NULL) {
-		int e = ipsecsetup(sep->se_family, sep->se_fd, sep->se_policy);
-		if (e < 0) {
-			syslog(LOG_ERR, SERV_FMT ": ipsec setup failed",
-			    SERV_PARAMS(sep));
-			(void)close(sep->se_fd);
-			sep->se_fd = -1;
-			return;
-		}
+	if (ipsec_set(sep->se_family, sep->se_fd, sep->se_ipsec) < 0) {
+		my_syslog(LOG_ERR, SERV_FMT ": ipsec setup failed",
+		    	SERV_PARAMS(sep));
+		(void)close(sep->se_fd);
+		sep->se_fd = -1;
+		return;
 	}
 #endif
 
 	if (bind(sep->se_fd, &sep->se_ctrladdr, sep->se_ctrladdr_size) < 0) {
 		DPRINTF(SERV_FMT ": bind failed: %s",
 			SERV_PARAMS(sep), strerror(errno));
-		syslog(LOG_ERR, SERV_FMT ": bind: %m",
-		    SERV_PARAMS(sep));
+		my_syslog(LOG_ERR, SERV_FMT ": bind: %s",
+		    SERV_PARAMS(sep), strerror(errno));
 		(void) close(sep->se_fd);
 		sep->se_fd = -1;
 		if (!timingout) {
@@ -807,15 +927,17 @@ setsockopt(fd, SOL_SOCKET, opt, &on, (socklen_t)sizeof(on))
 		case AF_INET:
 			if (setsockopt(sep->se_fd, IPPROTO_IP,
 			    IP_RECVDSTADDR, &on, sizeof(on)) < 0)
-				syslog(LOG_ERR,
-				    "setsockopt (IP_RECVDSTADDR): %m");
+				my_syslog(LOG_ERR,
+				    "setsockopt (IP_RECVDSTADDR): %s",
+					strerror(errno));
 			break;
 #ifdef INET6
 		case AF_INET6:
 			if (setsockopt(sep->se_fd, IPPROTO_IPV6,
 			    IPV6_RECVPKTINFO, &on, sizeof(on)) < 0)
-				syslog(LOG_ERR,
-				    "setsockopt (IPV6_RECVPKTINFO): %m");
+				my_syslog(LOG_ERR,
+				    "setsockopt (IPV6_RECVPKTINFO): %s",
+					strerror(errno));
 			break;
 #endif
 		}
@@ -825,8 +947,8 @@ setsockopt(fd, SOL_SOCKET, opt, &on, (socklen_t)sizeof(on))
 	if (sep->se_accf.af_name[0] != 0 && setsockopt(sep->se_fd, SOL_SOCKET,
 	    SO_ACCEPTFILTER, &sep->se_accf,
 	    (socklen_t)sizeof(sep->se_accf)) < 0)
-		syslog(LOG_ERR, "setsockopt(SO_ACCEPTFILTER %s): %m",
-		    sep->se_accf.af_name);
+		my_syslog(LOG_ERR, "setsockopt(SO_ACCEPTFILTER %s): %s",
+		    sep->se_accf.af_name, strerror(errno));
 
 	ev = allocchange();
 	EV_SET(ev, sep->se_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0,
@@ -843,7 +965,7 @@ setsockopt(fd, SOL_SOCKET, opt, &on, (socklen_t)sizeof(on))
  * Finish with a service and its socket.
  */
 void
-close_sep(struct servtab *sep)
+sep_close(struct servtab *sep)
 {
 
 	if (sep->se_fd >= 0) {
@@ -867,14 +989,14 @@ register_rpc(struct servtab *sep)
 	int n;
 
 	if ((nconf = getnetconfigent(sep->se_proto+4)) == NULL) {
-		syslog(LOG_ERR, "%s: getnetconfigent failed",
+		my_syslog(LOG_ERR, "%s: getnetconfigent failed",
 		    sep->se_proto);
 		return;
 	}
 	socklen = sizeof ss;
 	if (getsockname(sep->se_fd, (struct sockaddr *)(void *)&ss, &socklen) < 0) {
-		syslog(LOG_ERR, SERV_FMT ": getsockname: %m",
-		    SERV_PARAMS(sep));
+		my_syslog(LOG_ERR, SERV_FMT ": getsockname: %s",
+		    SERV_PARAMS(sep), strerror(errno));
 		return;
 	}
 
@@ -887,7 +1009,7 @@ register_rpc(struct servtab *sep)
 		    taddr2uaddr(nconf, &nbuf));
 		(void)rpcb_unset((unsigned int)sep->se_rpcprog, (unsigned int)n, nconf);
 		if (rpcb_set((unsigned int)sep->se_rpcprog, (unsigned int)n, nconf, &nbuf) == 0)
-			syslog(LOG_ERR, "rpcb_set: %u %d %s %s%s",
+			my_syslog(LOG_ERR, "rpcb_set: %u %d %s %s%s",
 			    sep->se_rpcprog, n, nconf->nc_netid,
 			    taddr2uaddr(nconf, &nbuf), clnt_spcreateerror(""));
 	}
@@ -902,7 +1024,7 @@ unregister_rpc(struct servtab *sep)
 	struct netconfig *nconf;
 
 	if ((nconf = getnetconfigent(sep->se_proto+4)) == NULL) {
-		syslog(LOG_ERR, "%s: getnetconfigent failed",
+		my_syslog(LOG_ERR, "%s: getnetconfigent failed",
 		    sep->se_proto);
 		return;
 	}
@@ -911,7 +1033,7 @@ unregister_rpc(struct servtab *sep)
 		DPRINTF("rpcb_unset(%u, %d, %s)",
 		    sep->se_rpcprog, n, nconf->nc_netid);
 		if (rpcb_unset((unsigned int)sep->se_rpcprog, (unsigned int)n, nconf) == 0)
-			syslog(LOG_ERR, "rpcb_unset(%u, %d, %s) failed\n",
+			my_syslog(LOG_ERR, "rpcb_unset(%u, %d, %s) failed\n",
 			    sep->se_rpcprog, n, nconf->nc_netid);
 	}
 #endif /* RPC */
@@ -946,19 +1068,19 @@ bump_nofile(void)
 	struct rlimit rl;
 
 	if (getrlimit(RLIMIT_NOFILE, &rl) < 0) {
-		syslog(LOG_ERR, "getrlimit: %m");
+		my_syslog(LOG_ERR, "getrlimit: %s", strerror(errno));
 		return;
 	}
 	rl.rlim_cur = MIN(rl.rlim_max, rl.rlim_cur + FD_CHUNK);
 	if (rl.rlim_cur <= rlim_ofile_cur) {
-		syslog(LOG_ERR,
+		my_syslog(LOG_ERR,
 		    "bump_nofile: cannot extend file limit, max = %d",
 		    (int)rl.rlim_cur);
 		return;
 	}
 
 	if (setrlimit(RLIMIT_NOFILE, &rl) < 0) {
-		syslog(LOG_ERR, "setrlimit: %m");
+		my_syslog(LOG_ERR, "setrlimit: %s", strerror(errno));
 		return;
 	}
 
@@ -1396,12 +1518,9 @@ daytime_dg(int s, struct servtab *sep)
 static void
 usage(void)
 {
-#ifdef LIBWRAP
-	(void)fprintf(stderr, "usage: %s [-dl] [conf]\n", getprogname());
-#else
-	(void)fprintf(stderr, "usage: %s [-d] [conf]\n", getprogname());
-#endif
-	exit(EXIT_FAILURE);
+	(void)fprintf(stderr, "usage:\n%s " USAGE_SERVER
+		"\n%s " USAGE_CHECKER "\n", getprogname(), getprogname());
+	exit(EX_USAGE);
 }
 
 
@@ -1458,7 +1577,7 @@ tcpmux(int ctrl, struct servtab *sep)
 	if (strcasecmp(service, "help") == 0) {
 		strwrite(ctrl, "+Available services:\r\n");
 		strwrite(ctrl, "help\r\n");
-		for (sep = servtab; sep != NULL; sep = sep->se_next) {
+		for (sep = served; sep != NULL; sep = sep->se_next) {
 			if (!ISMUX(sep))
 				continue;
 			(void)write(ctrl, sep->se_service,
@@ -1469,7 +1588,7 @@ tcpmux(int ctrl, struct servtab *sep)
 	}
 
 	/* Try matching a service in inetd.conf with the request */
-	for (sep = servtab; sep != NULL; sep = sep->se_next) {
+	for (sep = served; sep != NULL; sep = sep->se_next) {
 		if (!ISMUX(sep))
 			continue;
 		if (strcasecmp(service, sep->se_service) == 0) {
@@ -1481,7 +1600,7 @@ tcpmux(int ctrl, struct servtab *sep)
 	}
 	strwrite(ctrl, "-Service not available\r\n");
 reject:
-	_exit(EXIT_FAILURE);
+	_exit(EX_UNAVAILABLE);
 }
 
 /*
@@ -1549,7 +1668,7 @@ bad:
 	if (getnameinfo(sa, sa->sa_len, hbuf, (socklen_t)sizeof(hbuf), NULL, 0,
 	    niflags) != 0)
 		strlcpy(hbuf, "?", sizeof(hbuf));
-	syslog(LOG_WARNING,"Possible DoS attack from %s, Port %d",
+	my_syslog(LOG_WARNING,"Possible DoS attack from %s, Port %d",
 		hbuf, port);
 	return false;
 }
@@ -1586,8 +1705,8 @@ my_kevent(const struct kevent *changelist, size_t nchanges,
 	while ((result = kevent(kq, changelist, nchanges, eventlist, nevents,
 	    NULL)) < 0)
 		if (errno != EINTR) {
-			syslog(LOG_ERR, "kevent: %m");
-			exit(EXIT_FAILURE);
+			my_syslog(LOG_ERR, "kevent: %s", strerror(errno));
+			exit(EX_OSERR);
 		}
 
 	return (result);
@@ -1616,4 +1735,23 @@ try_biltin(struct servtab *sep)
 		}
 	}
 	return false;
+}
+
+/*
+ * We are at WARNS=6, so to avoid fatal warning about fmt nonliteral,
+ * we include the format in the ellipsis. [TL]
+ */
+void __sysloglike(2, 3)
+my_syslog(int prio, const char *msg, ...)
+{
+	va_list	args;
+
+	va_start(args, msg);
+	if (syslogging)
+		vsyslog(prio, msg, args);
+	else {
+		(void)vfprintf((prio == LOG_INFO)? stdout : stderr, msg, args);
+		(void)fprintf((prio == LOG_INFO)? stdout : stderr,"\n");
+	}
+	va_end(args);
 }
