@@ -1,0 +1,30 @@
+               MAIN CHANGES FROM THE NETBSD TRUNK
+                           2023-11-04
+
+
+Kernel related changes
+======================
+
+	- (partly DRM*) userconf can take also as a selector a pattern
+	between slashes, for a fixed substring that can be anchored;
+
+	- (DRM*) Specifying in sys/uvm/pmap_pvt.* that one function is
+	only used by DRMKMS (drm2/).
+
+	- Updating sys/dev/videomode/ to use the reference for
+	monitors: VESA. This also corrects Mac modes (not specified
+	in VESA DMT but that X11 got wrong).
+
+Userland related changes
+========================
+
+	- Add the X11 DRMKMS man pages generated from rst (see
+	netbsd-xsrc/drm-rst);
+
+	- New version of inetd(8) addressing security issues (ignoring
+	syntax errors that may lead to serve what was not intended to
+	be served): adds an unprivileged syntax checker mode; extend
+	the syntax; add a resilient mode that permits whether toi
+	continue servicing a previous valid config (when trying to
+	reload i.e. change it) or to fallback to a fixed name fallback
+	one;
