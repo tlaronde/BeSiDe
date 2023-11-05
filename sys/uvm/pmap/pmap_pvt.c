@@ -44,7 +44,7 @@ __RCSID("$NetBSD: pmap_pvt.c,v 1.15 2022/05/08 22:03:02 rin Exp $");
 /*
  * unmanaged pv-tracked ranges
  *
- * This is a linear list for now because the only user are the DRM
+ * This is a linear list for now because the only user are the DRMKMS (drm2/)
  * graphics drivers, with a single tracked range per device, for the
  * graphics aperture, so there are expected to be few of them.
  *
