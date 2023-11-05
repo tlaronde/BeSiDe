@@ -40,7 +40,7 @@ struct pmap_page;
 void pmap_pv_init(void);
 
 void pmap_pv_track(paddr_t, psize_t);
-void pmap_pv_untrack(paddr_t, psize_t);
+void pmap_pv_untrack(paddr_t, psize_t); /* DRMKMS (drm2/) only user */
 
 struct pmap_page *pmap_pv_tracked(paddr_t);
 
