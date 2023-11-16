@@ -533,22 +533,22 @@ userconf_help(void)
 			printf("8|10|16             base on large numbers");
 			break;
 		case 'c':
-			printf("devno|dev|pattern   change devices");
+			printf("devno|dev           change devices");
 			break;
 		case 'd':
-			printf("devno|dev|pattern   disable devices");
+			printf("devno|dev           disable devices");
 			break;
 		case 'e':
-			printf("devno|dev|pattern   enable devices");
+			printf("devno|dev           enable devices");
 			break;
 		case 'f':
-			printf("devno|dev|pattern   find devices");
+			printf("devno|dev           find devices");
 			break;
 		case 'h':
 			printf("                    this message");
 			break;
 		case 'l':
-			printf("[pattern]           list configuration");
+			printf("                    list configuration");
 			break;
 		case 'q':
 			printf("                    leave userconf");
@@ -562,94 +562,17 @@ userconf_help(void)
 	}
 }
 
-/*
- * A pattern is given between slashes, and can be anchored
- * at the beginning of the device name by a caret '^' and/or at the
- * end by a dollar '$'. No wildcards ('.') or counting: only a fixed
- * substring, perhaps anchored, and if anchored from the beginning to
- * the end, it is an exact string.
- * We do not allocate but manipulate the string via its pointer (in
- * userconf_argbuf), if * and only if it is a pattern, in order to set
- * the flags and to make the substr valid for strcasestr(3).
- */
-#define UC_PATTERN_ANCHORED_START 0x01
-#define UC_PATTERN_ANCHORED_END 0x02
-
-static int
-userconf_pattern_set(char **s, int *len, int *flags)
-{
-	*flags = 0;
-	*len = strlen(*s);
-
-	if ( *len < 3 || (*s)[0] != '/' || (*s)[*len - 1] != '/'
-		|| ( *len == 3 && ((*s)[1] == '^' || (*s)[1] == '$') )
-		|| ( *len == 4 && (*s)[1] == '^' && (*s)[2] == '$' )
-		)
-		return 1;
-
-	/* this is a pattern, we can modify the string in buf */
-	(*s)[*len - 1] = '\0';
-	(*s)++;
-	*len -= 2;
-	if ((*s)[0] == '^') {
-		*flags |= UC_PATTERN_ANCHORED_START;
-		(*s)++;
-		*len -= 1;
-	}
-	if ((*s)[*len - 1] == '$') {
-		*flags |= UC_PATTERN_ANCHORED_END;
-		(*s)[*len - 1] = '\0';
-		*len -= 1;
-	}
-	return 0;
-}
-
-static int
-userconf_pattern_match(const char *s, char *pattern, int pattern_len,
-	int pattern_flags)
-{
-	int len;
-	int shift, first, last;
-
-	len = strlen(s);
-	if ( len < pattern_len
-		|| ( (pattern_flags & UC_PATTERN_ANCHORED_START)
-			&& (pattern_flags & UC_PATTERN_ANCHORED_END)
-			&& len != pattern_len )
-		)
-		return -1;
-
-	first = (pattern_flags & UC_PATTERN_ANCHORED_END)?
-		len - pattern_len : 0;
-
-	last = (pattern_flags & UC_PATTERN_ANCHORED_START)?
-		0 : len - pattern_len;
-
-	for (shift = first; shift <= last; ++shift) {
-		if (strncasecmp(s + shift, pattern, pattern_len) == 0)
-			return 0;
-	}
-
-	return 1;
-}
-
 static void
-userconf_list(char *pattern, int plen, int pflags)
+userconf_list(void)
 {
-	int i;
+	int i = 0;
 
 	userconf_cnt = 0;
-	
-	i = 0;
+
 	while (cfdata[i].cf_name != NULL) {
-		if (*pattern == '\0'
-			|| userconf_pattern_match(cfdata[i].cf_name,
-				pattern, plen, pflags) == 0) {
-			if (userconf_more())
-				break;
-			userconf_pdev(i);
-		}
-		i++;
+		if (userconf_more())
+			break;
+		userconf_pdev(i++);
 	}
 
 	userconf_cnt = -1;
@@ -721,56 +644,6 @@ userconf_common_dev(char *dev, int len, short unit, short state, char routine)
 	}
 }
 
-static void
-userconf_pattern_dev(char *pattern, int plen, int pflags, char routine)
-{
-	int i;
-
-	switch (routine) {
-	case UC_CHANGE:
-		break;
-	default:
-		userconf_cnt = 0;
-		break;
-	}
-
-	i = 0;
-	while (cfdata[i].cf_name != NULL) {
-		if (userconf_pattern_match(cfdata[i].cf_name, pattern,
-			plen, pflags) == 0) {
-			if (userconf_more())
-				break;
-			switch (routine) {
-			case UC_CHANGE:
-				userconf_change(i);
-				break;
-			case UC_ENABLE:
-				userconf_enable(i);
-				break;
-			case UC_DISABLE:
-				userconf_disable(i);
-				break;
-			case UC_FIND:
-				userconf_pdev(i);
-				break;
-			default:
-				printf("Unknown routine /%c/\n",
-				    routine);
-				break;
-			}
-		}
-		i++;
-	}
-
-	switch (routine) {
-	case UC_CHANGE:
-		break;
-	default:
-		userconf_cnt = -1;
-		break;
-	}
-}
-
 #if 0
 static void
 userconf_add_read(char *prompt, char field, char *dev, int len, int *val)
@@ -822,7 +695,6 @@ userconf_parse(char *cmd)
 {
 	char *c, *v;
 	int i = 0, j = 0, k, a;
-	int plen, pflags; /* pattern length and pattern flags */
 	short unit, state;
 
 	c = cmd;
@@ -837,10 +709,8 @@ userconf_parse(char *cmd)
 	k = -1;
 	while (*userconf_cmds[j] != '\0') {
 		if (strlen(userconf_cmds[j]) == i) {
-			if (strncasecmp(v, userconf_cmds[j], i) == 0) {
+			if (strncasecmp(v, userconf_cmds[j], i) == 0)
 				k = j;
-				break;
-			}
 		}
 		j += 2;
 	}
@@ -875,9 +745,7 @@ userconf_parse(char *cmd)
 			break;
 		case 'c':
 			if (*c == '\0')
-				printf("DevNo, Dev or Pattern expected\n");
-			else if (userconf_pattern_set(&c, &plen, &pflags) == 0)
-				userconf_pattern_dev(c, plen, pflags, UC_CHANGE);
+				printf("DevNo or Dev expected\n");
 			else if (userconf_number(c, &a) == 0)
 				userconf_change(a);
 			else if (userconf_device(c, &a, &unit, &state) == 0)
@@ -887,9 +755,7 @@ userconf_parse(char *cmd)
 			break;
 		case 'd':
 			if (*c == '\0')
-				printf("DevNo, Dev or Pattern expected\n");
-			else if (userconf_pattern_set(&c, &plen, &pflags) == 0)
-				userconf_pattern_dev(c, plen, pflags, UC_DISABLE);
+				printf("Attr, DevNo or Dev expected\n");
 			else if (userconf_number(c, &a) == 0)
 				userconf_disable(a);
 			else if (userconf_device(c, &a, &unit, &state) == 0)
@@ -899,9 +765,7 @@ userconf_parse(char *cmd)
 			break;
 		case 'e':
 			if (*c == '\0')
-				printf("DevNo, Dev or Pattern expected\n");
-			else if (userconf_pattern_set(&c, &plen, &pflags) == 0)
-				userconf_pattern_dev(c, plen, pflags, UC_ENABLE);
+				printf("Attr, DevNo or Dev expected\n");
 			else if (userconf_number(c, &a) == 0)
 				userconf_enable(a);
 			else if (userconf_device(c, &a, &unit, &state) == 0)
@@ -912,8 +776,6 @@ userconf_parse(char *cmd)
 		case 'f':
 			if (*c == '\0')
 				printf("DevNo or Dev expected\n");
-			else if (userconf_pattern_set(&c, &plen, &pflags) == 0)
-				userconf_pattern_dev(c, plen, pflags, UC_FIND);
 			else if (userconf_number(c, &a) == 0)
 				userconf_pdev(a);
 			else if (userconf_device(c, &a, &unit, &state) == 0)
@@ -925,9 +787,8 @@ userconf_parse(char *cmd)
 			userconf_help();
 			break;
 		case 'l':
-			if (*c == '\0'
-				|| userconf_pattern_set(&c, &plen, &pflags) == 0)
-				userconf_list(c, plen, pflags);
+			if (*c == '\0')
+				userconf_list();
 			else
 				printf("Unknown argument\n");
 			break;
