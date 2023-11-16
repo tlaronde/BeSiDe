@@ -74,33 +74,26 @@ supports the following commands:
 Specify the number of lines before more.
 .It Ic base Ar 8 | 10 | 16
 Base for displaying large numbers.
-.It Ic change Ar devno | dev | pattern
+.It Ic change Ar devno | dev
 Change devices.
-.It Ic disable Ar devno | dev | pattern
+.It Ic disable Ar devno | dev
 Disable devices.
-.It Ic enable Ar devno | dev | pattern
+.It Ic enable Ar devno | dev
 Enable devices.
 .It Ic exit
 A synonym for
 .Ic quit .
-.It Ic find Ar devno | dev | pattern
+.It Ic find Ar devno | dev
 Find devices.
 .It Ic help
 Display online help.
-.It Ic list Ar pattern
+.It Ic list
 List current configuration.
 .It Ic quit
 Leave userconf.
 .It Ic \&?
 A synonym for
 .Ic help .
-.El
-.Sh PATTERN
-A pattern is a string between slashes \&/. The string is searched as a
-fixed substring (there is neither a wildcard special character, nor
-ranges or counts etc.), that can be anchored at the beginning of the
-string to match against with a caret \&^; and/or at the end of the
-string to match against with a dollar \&$.
 .El
 .Sh HISTORY
 The
