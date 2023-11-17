@@ -7,9 +7,7 @@ PROG=	mountd
 SRCS=	mountd.c ipsec.c get_net.c
 MAN=	exports.5 mountd.8
 
-INETDDIR= ${.CURDIR}/../inetd
-
-CPPFLAGS+= -I${INETDDIR} -DIPSEC
+CPPFLAGS+= -DIPSEC
 LDADD+=	-lipsec -lutil
 DPADD+=	${LIBIPSEC} ${LIBUTIL}
 
