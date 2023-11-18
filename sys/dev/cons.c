@@ -95,6 +95,8 @@ struct	tty *volatile constty;	/* virtual console output device */
 struct	consdev *cn_tab;	/* physical console device info */
 struct	vnode *cn_devvp[2];	/* vnode for underlying device. */
 
+static unsigned char cn_cmap[UCHAR_MAX+1];	/* char mapping for cngetc() */
+
 void
 cn_set_tab(struct consdev *tab)
 {
@@ -109,6 +111,15 @@ cn_set_tab(struct consdev *tab)
 	 * cn_tab updates.
 	 */
 	cn_tab = tab;
+
+	/*
+	 * Char mapping is only done in cngetc() i.e. in kernel
+	 * startup when the console is not a tty. Assuming here that
+	 * if there were more than one console, there would be a
+	 * different terminal, that is a different keyboard attached
+	 * to the console so a different mapping.
+	 */
+	cncmapreset();
 }
 
 int
@@ -315,6 +326,29 @@ cnkqfilter(dev_t dev, struct knote *kn)
 	return error;
 }
 
+void
+cncmapreset(void)
+{
+	unsigned char c;
+
+	/* Consistency, a keyboard is supposed attached to a cons */
+	if (cn_tab == NULL)
+		return;
+
+	for (c = 0; c <= UCHAR_MAX; c++)
+		cn_cmap[c] = c;
+}
+
+void
+cncmap(unsigned char from, unsigned char to)
+{
+	if (cn_tab == NULL)
+		return;
+
+	if (from)	/* Nul is never mapped */
+		cn_cmap[from] = to;
+}
+
 int
 cngetc(void)
 {
@@ -325,7 +359,9 @@ cngetc(void)
 		const int rv = (*cn_tab->cn_getc)(cn_tab->cn_dev);
 		if (rv >= 0) {
 			splx(s);
-			return rv;
+			/* Nul is never mapped */
+			return (rv && rv <= UCHAR_MAX)?
+				(int) cn_cmap[(unsigned char)rv] : rv;
 		}
 		docritpollhooks();
 	}
