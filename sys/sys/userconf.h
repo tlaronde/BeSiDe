@@ -1,7 +1,7 @@
 /*	$NetBSD: userconf.h,v 1.7 2011/05/31 23:28:53 dyoung Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2009, 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,6 @@
 void userconf_bootinfo(void);
 void userconf_init(void);
 void userconf_prompt(void);
-int userconf_parse(char *);
+int userconf_parse(const char *);	/* returns -1 if ordered to quit */
 
 #endif /* !_SYS_USERCONF_H_ */
