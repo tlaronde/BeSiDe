@@ -95,6 +95,9 @@ struct	tty *volatile constty;	/* virtual console output device */
 struct	consdev *cn_tab;	/* physical console device info */
 struct	vnode *cn_devvp[2];	/* vnode for underlying device. */
 
+static bool cn_cmap_inited;
+static unsigned char cn_cmap[UCHAR_MAX+1];	/* char mapping for cngetc() */
+
 void
 cn_set_tab(struct consdev *tab)
 {
@@ -315,17 +318,54 @@ cnkqfilter(dev_t dev, struct knote *kn)
 	return error;
 }
 
+void
+cncmapreset(void)
+{
+	int c;
+
+	for (c = 0; c <= UCHAR_MAX; c++)
+		cn_cmap[c] = (unsigned char) c;
+
+	cn_cmap_inited = true;
+}
+
+void
+cncmap(const char *s)
+{
+	int i;
+
+	if (!cn_cmap_inited)
+		cncmapreset();
+
+	if (s == NULL)
+		return;
+
+	for (i = 0; s[i] != '\0'; i++)
+		;
+
+	if (i % 2)	/* string must be even */
+		return;
+
+	for (i = 0; s[i] != '\0'; i += 2)
+		cn_cmap[(unsigned char) s[i]] = (unsigned char) s[i+1];
+}
+
 int
 cngetc(void)
 {
 	if (cn_tab == NULL)
 		return (0);
+
+	if (!cn_cmap_inited)
+		cncmapreset();
+
 	int s = splhigh();
 	for (;;) {
 		const int rv = (*cn_tab->cn_getc)(cn_tab->cn_dev);
 		if (rv >= 0) {
 			splx(s);
-			return rv;
+			/* nul is invariant: always mapped to nul */
+			return (rv <= UCHAR_MAX)?  (int) cn_cmap[rv] : (rv);
 		}
 		docritpollhooks();
 	}

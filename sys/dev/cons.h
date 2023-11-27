@@ -79,6 +79,8 @@ extern	struct consdev *cn_tab;
 void	cn_set_tab(struct consdev *);
 
 void	cninit(void);
+void	cncmapreset(void);
+void	cncmap(const char *);
 int	cngetc(void);
 int	cngetsn(char *, int);
 void	cnputc(int);

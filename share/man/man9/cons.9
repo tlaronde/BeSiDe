@@ -24,11 +24,13 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 8, 2010
+.Dd November 26, 2023
 .Dt CONS 9
 .Os
 .Sh NAME
 .Nm cnbell ,
+.Nm cncmap ,
+.Nm cncmapreset ,
 .Nm cnflush ,
 .Nm cngetc ,
 .Nm cngetsn ,
@@ -40,6 +42,10 @@
 .In dev/cons.h
 .Ft void
 .Fn cnbell "u_int pitch" "u_int period" "u_int volume"
+.Ft void
+.Fn cncmap "const char *string"
+.Ft void
+.Fn cncmapreset "void"
 .Ft void
 .Fn cnflush "void"
 .Ft int
@@ -80,10 +86,19 @@ milliseconds at given
 Note that the
 .Fa volume
 value is ignored commonly.
+.It Fn cncmap
+Maps every odd index char of the even length string to the next char
+of the string. If the length of the string is not even, nothing is
+done. The mapping is only used inside
+.Fn cngetc
+and the facility exists to allow a kind of keyboard mapping during
+startup interaction.
+.It Fn cncmapreset
+Resets the char mapping to the identity mapping.
 .It Fn cnflush
 Waits for all pending output to finish.
 .It Fn cngetc
-Poll (busy wait) for an input and return the input key.
+Poll (busy wait) for an input and return the mapped input key.
 Returns 0 if there is no console input device.
 .Fn cnpollc
 .Em must
@@ -154,6 +169,7 @@ cnpollc(0);
 .Xr pckbd 4 ,
 .Xr pcppi 4 ,
 .Xr tty 4 ,
+.Xr userconf 4 ,
 .Xr wscons 4 ,
 .Xr wskbd 4 ,
 .Xr printf 9 ,
