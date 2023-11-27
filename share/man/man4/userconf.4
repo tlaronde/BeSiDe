@@ -1,10 +1,10 @@
 .\"     $NetBSD: userconf.4,v 1.14 2019/05/27 21:19:55 wiz Exp $
 .\"
-.\" Copyright (c) 2001 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2001, 2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
-.\" by Gregory McGarry.
+.\" by Gregory McGarry, and Thierry Laronde.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 1, 2001
+.Dd November 26, 2023
 .Dt USERCONF 4
 .Os
 .Sh NAME
@@ -40,9 +40,15 @@
 is the in-kernel device configuration manager.
 It is used to alter the kernel autoconfiguration framework at runtime.
 .Nm
-is activated from the boot loader by passing the
+first interprets commands defined at compile time by
+.Xr config 1
+and then commands eventually passed by
+.Xr boot 8 .
+Following these first step, a
+.Nm
+interactive session is run if the
 .Fl c
-option to the kernel.
+option was passed to the kernel by the boot loader.
 .Sh COMMAND SYNTAX
 The general command syntax is:
 .Bd -ragged -offset indent
@@ -66,35 +72,180 @@ one more page.
 .It Ic q
 abort the current command, and return to the command input mode.
 .El
+.Pp
+The commands and arguments are treated in a case insensitive way. For
+clarity, below, commands are given in lower case while single letter
+equivalents (for built-ins) are given in upper case. The case
+insensitivy is linked to the purpose and the moment when an
+interactive session can be run: at startup, when the keyboard might
+not be the US ASCII kind.
+.Pp
+For the same reason, instead of using special characters to identify
+a pattern or the definition of an alias, a flag is introduced,
+requiring only as supplementary character the hyphen 
+.Ql \&-
+followed by a letter.
+.Fl a
+indicates that the following string is an alias name and that its
+definition has to be taken.
+.Fl p
+indicates that the following string is a pattern.
 .Sh COMMANDS
+The main purpose of
 .Nm
-supports the following commands:
+is to deal with devices. Devices can be selected with one or more
+space separated
+.Ar selectors :
+.Bl -tag -width "-p pattern" -offset indent
+.It devno
+a positive or nul integer giving the index number of the device in
+the
+.Fa "struct cfdata"
+array. It has nothing to do with majors or minors numbers.
+.It devname Op \&* | number
+a driver name. If a trailing \&* is given, selects STARred devices for
+this driver name. If a trailing number is given, selects the device
+for this driver name with the number as the unit.
+.It -p \&[\&*\&]substring\&[\&*\&] Op \&*\&* | number
+a pattern to select devices by matching the driver name. If a leading
+\&* is given, the substring can start anywhere in the driver name; if
+a single trailing \&* is given, the substring can end
+anywhere in the driver name. To this specification, one can add at the
+end two stars in a row \&*\&* to indicate to select STARred devices; or
+a unit number. Hence a pattern can have as much as three trailing stars
+\&*\&*\&* indicating that the substring does not have to end the
+driver name and that the STARred instances of the matching driver
+names are to be considered.
+.It -a name
+the name is the name of an alias and its expansion is substituted in
+the command line as a list of arguments.
+.El
+.Pp
+.Nm
+supports the following built-in commands:
 .Bl -tag -width 5n
 .It Ic lines Ar count
-Specify the number of lines before more.
+Specify the number of lines before more. A negative number suppresses
+the paging.
 .It Ic base Ar 8 | 10 | 16
 Base for displaying large numbers.
-.It Ic change Ar devno | dev
+.It Ic alias Oo Fl c Oc Ar name def
+Adds to the definition of
+.Ar name
+the
+.Ar def
+that is the remaining of the command line skipping the blanks and
+newlines following the name. If the
+.Fl c
+flag is given, the alias to define is an executable one and the string
+must be a valid command line starting by a command (whether a built-in
+or the name of another executable alias). If the alias does not already
+exist, it is created with this initial definition. When a new string is
+added to an existing alias, it is added as a supplementary new line.
+An executable alias can not take paramaters and its name will appear
+as the first and only token of a command line. An alias name must be an
+alphanumeric string, starting by a letter and must be at least two
+chars long. To clear an alias, use the
+.Ic unalias
+built-in.
+.It Ic change Ar selectors
 Change devices.
-.It Ic disable Ar devno | dev
+.It Ic disable Ar selectors
 Disable devices.
-.It Ic enable Ar devno | dev
+.It Ic enable Ar selectors
 Enable devices.
 .It Ic exit
 A synonym for
 .Ic quit .
-.It Ic find Ar devno | dev
+.It Ic find Ar selectors
 Find devices.
 .It Ic help
-Display online help.
-.It Ic list
-List current configuration.
+Display online help, including defined aliases; an executable alias
+has a star prepended to its name. To display the definition of an
+alias, use the
+.Ic print
+built-in.
+.It Ic kmap Op token ...
+If no token is given, resets the mapping to the identity. If tokens
+are given, they must be of even length and any char in odd
+position in the token is mapped to the following char of the token. The
+mapping appears at the console (see
+.Xr cons 9 )
+and has no effect for other sources of commands (
+.Xr config 1
+generated kernel configuration or
+.Xr boot 8
+one). Since tokenization is done with blanks and new line as
+separators, it is not possible at the moment to map a blank or a new
+line.
+.It Ic list Op Ar selectors
+List the devices matching the selectors given or, if no selector was
+given, the current configuration.
+.It Ic print Op Ar string | -a name ...
+Prints the optional arguments and then a new line. Without the
+.Fl a
+flag, the string is printed as is; with the flag, the following
+argument is expected to be an alias name and its expansion (recursively
+interpreted) is printed in its stead; hence to see the definition of
+an alias without interpretation, use the
+.Ic vis
+command instead. It is not possible to print a literal
+.Ql -a
+since it will be interpreted as signifying: next argument is a name
+variable whose definition has to be printed in its stead. Should the
+need arise for such thing, define an alias with the string...
 .It Ic quit
-Leave userconf.
+Leave userconf. The command is imperative: once the command is
+identified, the parsing exits (even if faulty trailing arguments are
+present).
+.It Ic unalias Ar name
+Undefine the
+.Ar name
+alias.
+.It Ic vis Ar name
+prints the definition, uninterpreted, of the named alias.
 .It Ic \&?
 A synonym for
 .Ic help .
+.It Ic debug0
+Debugging information about instructions added by
+.Xr config 1
+and parsed at startup time.
+.It Ic debug1
+Debugging information about
+.Nm
+memory and structures allocations.
+.It Ic debug2
+Debugging information about the aliases (prints all the defined
+aliases as long as their definition, the addresses of strings and
+sizes).
 .El
+.Pp
+The built-in commands can be given with a key (a uniq letter; remainder:
+command names as arguments are treated in a case insensitive way, and
+the use of lower case and upper case here is only for clarity):
+.Bl -column -offset indent ".Sy Command" ".Sy Key
+.It Sy Command Ta Sy Key
+.It Li alias Ta A
+.It Li change Ta C
+.It Li disable Ta D
+.It Li enable Ta E
+.It Li find Ta F
+.It Li help Ta H
+.It Li kmap Ta K
+.It Li lines Ta W
+.It Li list Ta L
+.It Li print Ta P
+.It Li quit Ta Q
+.It Li unalias Ta U
+.It Li vis Ta V
+.It Li debug0 Ta 0
+.It Li debug1 Ta 1
+.It Li debug2 Ta 2
+.El
+.Sh SEE ALSO
+.Xr boot 8 ,
+.Xr config 1
 .Sh HISTORY
 The
 .Nm
@@ -102,9 +253,31 @@ framework first appeared in
 .Ox 2.0 ,
 and was then integrated into
 .Nx 1.6 .
+.Pp
+Key mapping, patterns, aliases and
+.Xr config 1
+system configuration were integrated into
+.Nx 10.0 .
 .Sh AUTHORS
 The
 .Nm
 framework was written by
 .An Mats O Jansson
 .Aq Mt moj@stacken.kth.se .
+.Pp
+The keys mapping, patterns, aliases and
+.Xr config 1
+system configuration were added by
+.An Thierry Laronde
+.Aq Mt tlaronde@kergis.com .
+The syntax (using mostly letters and avoiding special chars) owes
+much to
+.An RVP
+.Aq Mt rvp@SDF.ORG .
+.Sh SOURCES
+.Bl
+.It Pa sys/arch/${MACHINE}/compile/${KERNEL}/ioconf.c
+.It Pa sys/arch/${MACHINE}/compile/${KERNEL}/uckconf.c
+.It Pa sys/sys/userconf.h
+.It Pa sys/kern/subr_userconf.c
+.El
