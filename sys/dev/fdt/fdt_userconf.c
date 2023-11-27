@@ -61,7 +61,8 @@ userconf_bootinfo(void)
 		    index++, NULL);
 		if (cmd != NULL) {
 			aprint_debug("Processing userconf command: %s\n", cmd);
-			userconf_parse(__UNCONST(cmd));
+			if (userconf_parse(cmd) == -1)
+				break;	/* Quitting is imperative */
 		}
 	} while (cmd != NULL);
 }

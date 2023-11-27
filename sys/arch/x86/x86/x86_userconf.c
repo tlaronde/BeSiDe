@@ -56,6 +56,7 @@ userconf_bootinfo(void)
 	bimax = bi + biuc->num;
 	for (; bi < bimax; bi++) {
 		aprint_debug("Processing userconf command: %s\n", bi->text);
-		userconf_parse(bi->text);
+		if (userconf_parse(bi->text) == -1)
+			break;	/* quitting is imperative */
 	}
 }
