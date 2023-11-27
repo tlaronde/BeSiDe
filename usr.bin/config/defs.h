@@ -631,6 +631,11 @@ int	mkmakefile(void);
 /* mkswap.c */
 int	mkswap(void);
 
+/* mkuckconf.c */
+int	mkuckconf(void);
+extern char **uc_cmd;
+extern unsigned int uc_ncmd;
+
 /* pack.c */
 void	pack(void);
 

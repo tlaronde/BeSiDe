@@ -305,6 +305,7 @@ fixfiles(void)
 	nallfiles = 1 << 30;
 	addfile("devsw.c", NULL, 0, NULL);
 	addfile("ioconf.c", NULL, 0, NULL);
+	addfile("uckconf.c", NULL, 0, NULL);
 
 	TAILQ_FOREACH(cf, &allcf, cf_next) {
  		(void)snprintf(swapname, sizeof(swapname), "swap%s.c",

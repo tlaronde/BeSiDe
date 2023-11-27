@@ -6,7 +6,7 @@ WARNS=6
 
 PROG=	config
 SRCS=	files.c gram.y hash.c lint.c main.c mkdevsw.c mkheaders.c mkioconf.c \
-	mkmakefile.c mkswap.c pack.c scan.l sem.c util.c
+	mkmakefile.c mkswap.c mkuckconf.c pack.c scan.l sem.c util.c
 
 .PATH:	${NETBSDSRCDIR}/usr.bin/cksum
 SRCS+=  crc.c
