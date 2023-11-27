@@ -24,7 +24,7 @@
 .\"  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\"  POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 19, 2016
+.Dd November 26, 2023
 .Dt CONFIG 5
 .Os
 .Sh NAME
@@ -327,6 +327,12 @@ has been previously defined, through
 .Ic define
 or any other statement that implicitly defines attributes such as
 .Ic device .
+.Pp
+.It Ic userconf Ar string
+Adds the string to the array of instructions that will be interpreted
+at startup time by
+.Xr userconf 4 .
+Adds the
 .El
 .\"
 .\"

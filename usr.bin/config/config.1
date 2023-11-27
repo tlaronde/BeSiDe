@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)config.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd September 1, 2015
+.Dd November 26, 2023
 .Dt CONFIG 1
 .Os
 .Sh NAME
@@ -274,7 +274,11 @@ The output of
 .Nm
 consists of a number of files, principally
 .Pa ioconf.c ,
-a description of I/O devices that may be attached to the system; and a
+a description of I/O devices that may be attached to the system;
+.Pa uckconf.c ,
+a series of instructions interpreted at startup time by
+.Xr userconf 4 ;
+ and a
 .Pa Makefile ,
 used by
 .Xr make 1
