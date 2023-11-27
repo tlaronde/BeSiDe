@@ -61,3 +61,17 @@ pseudo-device	cpuctl
 # other on reading from /dev/urandom.
 #
 pseudo-device	rnd
+
+#
+# Userconf MI aliases.
+#
+userconf	"alias azerty qaQAwzWZaqAQ;m:MzwZWm,M?,;<..:>/"
+# start to define an executable macro "fr"
+#   - printing a message
+userconf 	"alias -c fr print changing to pseudo-fr kbd mapping"
+#   - mapping from def of azerty (-a azerty) and mapping * and -
+userconf 	"alias -c fr kmap -a azerty `*~-"
+#   - printing a hint: * and - are mapped at the upper left key
+userconf	"alias -c fr p * and - are mapped to upper left ^2"
+# Here, another macro: the drmkms alias is defined in MD code
+userconf	"alias -c nodrmkms disable -a drmkms"

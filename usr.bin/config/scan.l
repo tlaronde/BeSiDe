@@ -330,6 +330,31 @@ package[ \t]+{FILENAME}{RESTOFLINE}	{
 		}
 	}
 
+userconf[ \t]+{QCHARS}{RESTOFLINE}	{
+		const char *c = yytext;
+		const char *e;
+		char **p;
+
+		yyline++;
+
+		while (*c && isascii((unsigned int)*c)
+			&& !isspace((unsigned int)*c))
+			c++;
+		while (*c && isascii((unsigned int)*c)
+			&& isspace((unsigned int)*c))
+			c++;
+		/* *c == '"' */
+		c++;
+		e = strchr(c, '"');
+
+		if ( (p = (char **) realloc(uc_cmd,
+			(uc_ncmd + 1) * sizeof(char *))) == NULL )
+			yyerror("unable to realloc uc_cmd");
+
+		uc_cmd = p;
+		uc_cmd[uc_ncmd++] = strndup(c, (size_t) (e - c));
+	}
+
 {PATH}	{
 		yylval.str = intern(yytext);
 		return PATHNAME;

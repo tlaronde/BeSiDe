@@ -586,7 +586,8 @@ main(int argc, char **argv)
 	 * Ready to go.  Build all the various files.
 	 */
 	if ((Sflag && mkallsubdirs()) || mksymlinks() || mkmakefile() || mkheaders() || mkswap() ||
-	    mkioconf() || (do_devsw ? mkdevsw() : 0) || mkident() || errors)
+	    mkioconf() || (do_devsw ? mkdevsw() : 0) || mkident() ||
+	    mkuckconf() || errors)
 		stop();
 	(void)printf("Build directory is %s\n", builddir);
 	(void)printf("Don't forget to run \"make depend\"\n");
