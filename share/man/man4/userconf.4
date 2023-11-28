@@ -101,7 +101,16 @@ space separated
 a positive or nul integer giving the index number of the device in
 the
 .Fa "struct cfdata"
-array. It has nothing to do with majors or minors numbers.
+array. It has nothing to do with majors or minors numbers. The number
+can be given in decimal, in octal with a
+.Ql 0
+prefix or in hexadecimal with the
+.Ql 0x
+or
+.Ql 0X
+prefix. The built-in
+.Ic base
+sets the base for the output and has no influence on input.
 .It devname Op \&* | number
 a driver name. If a trailing \&* is given, selects STARred devices for
 this driver name. If a trailing number is given, selects the device

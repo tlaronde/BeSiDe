@@ -167,7 +167,6 @@ struct args {
 #define UC_ARG_PATTERN_ANCHORED_BEGIN		0x40
 #define UC_ARG_PATTERN_ANCHORED_END		0x80
 
-static bool userconf_noargs;			/* set by userconf_args_init() */
 static int userconf_base = 16;			/* Base for "large" numbers */
 static int userconf_maxdev = -1;		/* # of used device slots   */
 static int userconf_totdev = -1;		/* # of device slots        */
@@ -192,7 +191,7 @@ static void		userconf_debug1(void);
 static void		userconf_debug2(void);
 static struct alias *	userconf_alias_find(const char *name, int namelen);
 static int		userconf_args_init(struct args args[], int *nargs,
-				const char *cmdline);
+				const char *cmdline, bool *noargs);
 static int		userconf_args_next(struct args args[], int *nargs);
 static void		userconf_args_next_token(struct args args[], int *nargs);
 static int		userconf_args_parse_number(const char *c, int len, int *val);
@@ -417,13 +416,14 @@ userconf_parse_number(const char *c, int *val)
 
 		if (cc >= '0' && cc <= '9')
 			cc = cc - '0';
-		else if (base != 16)
-			return -1;
 		else if (cc >= 'a' && cc <= 'f')
 			cc = cc - 'a' + 10;
 		else if (cc >= 'A' && cc <= 'F')
 			cc = cc - 'A' + 10;
 		else
+			return -1;
+
+		if (cc >= base)	/* not a valid digit */
 			return -1;
 
 		num = num * base + cc;
@@ -602,7 +602,8 @@ userconf_enable(int devno)
 		}
 		printf(" enabled\n");
 	} else {
-		printf("Incorrect devno (valid: [0,%d])\n", userconf_maxdev);
+		printf("Incorrect devno %d (valid: [0,%d])\n",
+			devno, userconf_maxdev);
 	}
 }
 
@@ -612,13 +613,27 @@ userconf_help(void)
 	int i, pad;
 	const struct alias *a;
 
+	userconf_cnt = 0;
+
 	printf("pattern: [*]substr[*][**|num]\n");
+	if (userconf_more())
+		return;	
 	printf("selector: devno | devname[*|num] | -p pattern | -a alias\n");
+	if (userconf_more())
+		return;
 	printf("selectors: selector [selector...]\n\n");
+	if (userconf_more())
+		return;
 	printf("\ndevno: [0,%d]\n", userconf_maxdev);
+	if (userconf_more())
+		return;
 	printf("\nkey|command   args                description\n");
+	if (userconf_more())
+		return;
 	i = 0;
 	while (userconf_cmds[i].name != NULL) {
+		if (userconf_more())
+			break;
 		printf("%c|%s", userconf_cmds[i].key, userconf_cmds[i].name);
 		pad = userconf_cmds[i].namelen;
 		while (pad < 10) {
@@ -683,8 +698,13 @@ userconf_help(void)
 		printf("\n");
 		i++;
 	}
+
+	if (userconf_more())
+		return;
 	printf("\nAliases:\n");
 	for (a = UC_ALIASES; a != NULL; a = a->next) {
+		if (userconf_more())
+			break;
 		if (UC_ALIAS_IS_NAME(a))
 			printf("\t%s%s\n", UC_ALIAS_IS_MACRO(a)? "*" : "",
 				a->s);
@@ -953,10 +973,10 @@ userconf_args_next_token(struct args args[], int *nargs)
  * an argument and is not handled by the  args_next() routine (a
  * macro is not called with a leading "-a" flag but just by its name).
  *
- * The special function for the cmdline also sets userconf_noargs.
  */
 static int
-userconf_args_init(struct args args[], int *nargs, const char *cmdline)
+userconf_args_init(struct args args[], int *nargs, const char *cmdline,
+	bool *noargs)
 {
 	if (UC_MAX_INDIRECT <= 0) {
 		printf("Nothing can be executed.\n");
@@ -984,9 +1004,9 @@ userconf_args_init(struct args args[], int *nargs, const char *cmdline)
 		*nargs = 0;
 
 	if (UC_REMAINSLENP == 0)
-		userconf_noargs = true;
+		*noargs = true;
 	else
-		userconf_noargs = false;
+		*noargs = false;
 		
 	return 0;
 }
@@ -1083,13 +1103,14 @@ userconf_args_parse_number(const char *c, int len, int *val)
 
 		if (cc >= '0' && cc <= '9')
 			cc = cc - '0';
-		else if (base != 16)
-			return -1;
 		else if (cc >= 'a' && cc <= 'f')
 			cc = cc - 'a' + 10;
 		else if (cc >= 'A' && cc <= 'F')
 			cc = cc - 'A' + 10;
 		else
+			return -1;
+
+		if (cc >= base)	/* not a valid digit */
 			return -1;
 
 		num = num * base + cc;
@@ -1300,9 +1321,10 @@ userconf_parse(const char *cmdline)
 	int icmd;	
 	int i, j;		/* all purposes local junk counters */
 	int nargs;		/* number of args lists pushed */
+	bool noargs;
 	struct args args[UC_MAX_INDIRECT];
 
-	if (userconf_args_init(args, &nargs, cmdline) == -1)
+	if (userconf_args_init(args, &nargs, cmdline, &noargs) == -1)
 		return -1;	/* unable to proceed: quit */
 
 	if (nargs == 0)
@@ -1329,7 +1351,7 @@ userconf_parse(const char *cmdline)
 		struct alias *a, *n;
 
 		if ( (a = userconf_alias_find(UC_ARG, UC_ARGLEN)) != NULL ) {
-			if (!userconf_noargs) {
+			if (!noargs) {
 				printf("A macro doesn't take parameters.\n");
 				return 0;
 			}
@@ -1357,7 +1379,7 @@ userconf_parse(const char *cmdline)
 		}
 	}
 
-	if (userconf_noargs && userconf_cmds[icmd].min_args != 0) {
+	if (noargs && userconf_cmds[icmd].min_args != 0) {
 		printf("Built-in: %s ('%c') takes args; try help\n",
 			userconf_cmds[icmd].name, userconf_cmds[icmd].key);
 		return 0;
@@ -1422,7 +1444,7 @@ userconf_parse(const char *cmdline)
 	case 'E':
 	case 'F':
 	case 'L':
-		if (userconf_noargs) {
+		if (noargs) {
 			/*
 			 * Assertion: only L allows no args; other
 			 * cases caught above.	
@@ -1458,7 +1480,7 @@ userconf_parse(const char *cmdline)
 		userconf_help();
 		break;
 	case 'K':
-		if (userconf_noargs) {
+		if (noargs) {
 			cncmapreset();
 			break;
 		}
@@ -1547,7 +1569,7 @@ userconf_parse(const char *cmdline)
 				for (a = a->next; a != NULL
 					&& UC_ALIAS_IS_DEF(a);
 					a = a->next)
-					printf("\t%s\n", a->s);
+					printf("%s\n", a->s);
 			} else
 				printf("Unknown alias\n");
 		}
@@ -1899,10 +1921,17 @@ userconf_debug0(void)
 {
 	int i;
 
-	printf("userconf_kconf[] (config(1) generated):\n");
+	userconf_cnt = 0;
 
-	for (i = 0; userconf_kconf[i] != NULL; i++)
+	printf("userconf_kconf[] (config(1) generated):\n");
+	if (userconf_more())
+		return;
+
+	for (i = 0; userconf_kconf[i] != NULL; i++) {
+		if (userconf_more())
+			break;
 		printf("\t%s\n", userconf_kconf[i]);
+	}
 }
 
 static void
@@ -1912,8 +1941,12 @@ userconf_debug1(void)
 	int nfree, free_size, nalloced, alloced_size, nnot_alloced;
 	int i;
 
+	userconf_cnt = 0;
+
 	printf("Memory: unit: %d bytes; start: %p\n",
 		(int) sizeof(void *), userconf_mem);	
+	if (userconf_more())
+		return;
 
 	for (alloced_size = nalloced = 0, a = UC_ALIASES;
 		 a != NULL; a = a->next) {
@@ -1926,28 +1959,36 @@ userconf_debug1(void)
 		++nfree;
 	}
 
-	printf("\ttotal\tallocated\tfree\n\t%d\t%d\t%d\n",
+	if (userconf_more())
+		return;
+	printf("\ttotal\tallocated\tfree\n\t%d\t%d\t%d",
 		UC_MEMSIZE, alloced_size, free_size);
-	printf("Memory consistency: ");
 	if (UC_MEMSIZE == alloced_size + free_size)
-		printf("OK\n");
+		printf("\tOK\n");
 	else
-		printf("INCONSISTENT\n");
+		printf("\tINCONSISTENT\n");
 
+	if (userconf_more())
+		return;
 	printf("Structs allocation:\n");
+	if (userconf_more())
+		return;
 	printf("\ttotal\tallocated\tfree\n");
 	for (i = nnot_alloced = 0; i < UC_MAX_MEM_OBJECTS; i++) {
 		if (!(UC_MEMOBJ[i].flags & UC_ALIAS_ALLOCATED))
 			++nnot_alloced;
 	}
-	printf("\t%d\t%d\t%d\n", UC_MAX_MEM_OBJECTS,
+	if (userconf_more())
+		return;
+	printf("\t%d\t%d\t%d", UC_MAX_MEM_OBJECTS,
 		nalloced + nfree, nnot_alloced);
-	printf("Struct allocation consistency: ");
 	if (UC_MAX_MEM_OBJECTS == nalloced + nfree + nnot_alloced)
-		printf("OK\n");
+		printf("\tOK\n");
 	else
-		printf("INCONSISTENT\n");
+		printf("\tINCONSISTENT\n");
 
+	if (userconf_more())
+		return;
 	printf("Memory map:\n");
 	for (a = UC_MEMFREE; a != NULL; a = a->next) {
 		if (userconf_more())
@@ -1962,7 +2003,11 @@ userconf_debug2(void)
 {
 	struct alias *a;
 
+	userconf_cnt = 0;
+
 	printf("Aliases (address, size bytes (size in mem units)):\n");
+	if (userconf_more())
+		return;
 	for (a = UC_ALIASES; a != NULL; a = a->next) {
 		if (userconf_more())
 			break;
