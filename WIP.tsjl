@@ -1,4 +1,6 @@
                 WORK IN PROGRESS (NOT PUBLISHED)
-                           2023-11-04
+                           2023-11-28
 
-- userconf: add grouping selection identified by enclosing braces.
+- drm / drmkms: verify if the legacy user space drivers (for i915)
+can still be used and chase also the bug about artefacts linked
+to memory problem (not updated; cache...).
