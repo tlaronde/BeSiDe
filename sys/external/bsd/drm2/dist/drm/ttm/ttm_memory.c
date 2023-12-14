@@ -317,11 +317,12 @@ static int ttm_mem_init_kernel_zone(struct ttm_mem_global *glob,
 	if (unlikely(!zone))
 		return -ENOMEM;
 
-	mem = si->totalram - si->totalhigh;
+	mem = si->freeram;
 	mem *= si->mem_unit;
 
 	zone->name = "kernel";
 	zone->zone_mem = mem;
+	/* use at most half the available */
 	zone->max_mem = mem >> 1;
 	zone->emer_mem = (mem >> 1) + (mem >> 2);
 	zone->swap_limit = zone->max_mem - (mem >> 3);
@@ -393,27 +394,17 @@ static int ttm_mem_init_dma32_zone(struct ttm_mem_global *glob,
 	if (unlikely(!zone))
 		return -ENOMEM;
 
-	mem = si->totalram;
-	mem *= si->mem_unit;
-
-	/**
-	 * No special dma32 zone needed.
-	 */
-
-	if (mem <= ((uint64_t) 1ULL << 32)) {
-		kfree(zone);
-		return 0;
-	}
-
 	/*
-	 * Limit max dma32 memory to 4GB for now
-	 * until we can figure out how big this
-	 * zone really is.
+	 * Limit max dma32 memory to half the available but this
+	 * has to be less than 4GB for the zone.
 	 */
+	mem = si->freeram;
+	mem *= si->mem_unit;
+	mem = (mem <= ((uint64_t) 1ULL << 32))? mem : 1ULL << 32;
 
-	mem = ((uint64_t) 1ULL << 32);
 	zone->name = "dma32";
 	zone->zone_mem = mem;
+	/* use at most half the available */
 	zone->max_mem = mem >> 1;
 	zone->emer_mem = (mem >> 1) + (mem >> 2);
 	zone->swap_limit = zone->max_mem - (mem >> 3);
