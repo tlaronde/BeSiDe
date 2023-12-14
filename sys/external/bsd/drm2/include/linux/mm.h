@@ -53,9 +53,16 @@ struct file;
 
 #define	untagged_addr(x)	(x)
 
+/*
+ * All values (except mem_unit of course) are pages. Only used or
+ * making some sense on NetBSD members are filled: *high do not make
+ * sense (these are even not always enabled in Linux). totalhigh is
+ * set to 0 to neutralize the use, even in conditional HIGHMEM blocks.
+ */
 struct sysinfo {
 	unsigned long totalram;
-	unsigned long totalhigh;
+	unsigned long freeram;
+	unsigned long totalhigh;	/* does not make sense here */
 	uint32_t mem_unit;
 };
 
@@ -64,7 +71,8 @@ si_meminfo(struct sysinfo *si)
 {
 
 	si->totalram = uvmexp.npages;
-	si->totalhigh = kernel_map->size >> PAGE_SHIFT;
+	si->freeram = uvm_availmem(false);	/* require value */
+	si->totalhigh = 0;	/* just to keep code as is; neutralize */
 	si->mem_unit = PAGE_SIZE;
 	/* XXX Fill in more as needed.  */
 }
@@ -72,9 +80,7 @@ si_meminfo(struct sysinfo *si)
 static inline size_t
 si_mem_available(void)
 {
-
-	/* XXX ? */
-	return uvmexp.free;
+	return uvm_availmem(true);	/* use cached value */
 }
 
 static inline unsigned long
