@@ -1,9 +1,11 @@
                MAIN CHANGES FROM THE NETBSD TRUNK
-                           2023-11-26
+                           2023-12-14
 
 
 Kernel related changes
 ======================
+
+	- drm2/: correction of memory computation;
 
 	- config(1): it accepts now also context neutral "userconf"
 	directives. These add the double quoted string given as
