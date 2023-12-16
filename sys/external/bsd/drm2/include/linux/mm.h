@@ -54,15 +54,29 @@ struct file;
 #define	untagged_addr(x)	(x)
 
 /*
- * All values (except mem_unit of course) are pages. Only used or
- * making some sense on NetBSD members are filled: *high do not make
- * sense (these are even not always enabled in Linux). totalhigh is
- * set to 0 to neutralize the use, even in conditional HIGHMEM blocks.
+ * All values (except mem_unit of course) are pages. Only NetBSD
+ * used members or members appearing in the code (but not used here)
+ * are declared.
+ */
+
+/* XXX
+ *
+ * High mem have some meaning in some arches where the kernel
+ * pages can not be put anywhere in ram but have to appear in a
+ * limited range (low range).
+ * But on some arches, dma can not be map anywhere either.
+ * These are two different things, to be set M.D.
+ * For the moment, we make it simple: let's assume that the whole ram
+ * can be used for kernel and dma. This is used only to define what
+ * _could_ be used. Real * allocation is another subject.
+ *
+ * For the moment, totalhigh is set to 0 in order to neutralize the use, 
+ * even in conditional HIGHMEM blocks.
  */
 struct sysinfo {
 	unsigned long totalram;
 	unsigned long freeram;
-	unsigned long totalhigh;	/* does not make sense here */
+	unsigned long totalhigh;	/* XXX arch dependent */
 	uint32_t mem_unit;
 };
 
