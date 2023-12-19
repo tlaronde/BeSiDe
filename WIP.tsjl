@@ -1,6 +1,14 @@
                 WORK IN PROGRESS (NOT PUBLISHED)
-                           2023-11-28
+                           2023-12-19
+
+- X11 userspace: adding infrastructure to compile whatever is current,
+with R.I.S.K. (my own compile infrastructure) so that I can track down
+bugs in Mesa;
 
 - drm / drmkms: verify if the legacy user space drivers (for i915)
 can still be used and chase also the bug about artefacts linked
-to memory problem (not updated; cache...).
+to memory problem (not updated; cache...) => Note: these artefacts may
+not be a kernel cache problem but instead, userland problem with
+futexes: NetBSD is the only system to not use futexes and this could
+be the source of the problem, disappearing on heavy load because there
+are less concurrent X11 program threads stepping on each other toes.
