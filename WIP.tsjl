@@ -1,9 +1,11 @@
                 WORK IN PROGRESS (NOT PUBLISHED)
-                           2023-12-19
+                           2023-12-29
 
 - X11 userspace: adding infrastructure to compile whatever is current,
 with R.I.S.K. (my own compile infrastructure) so that I can track down
-bugs in Mesa;
+bugs in Mesa (once done, RISK will be published also as a git
+source---it is for now published in a tarball for compilation of
+kerTeX);
 
 - drm / drmkms: verify if the legacy user space drivers (for i915)
 can still be used and chase also the bug about artefacts linked
