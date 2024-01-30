@@ -1,0 +1,232 @@
+#                            X11 map
+#                  DOC AND FUNDAMENTAL PROTOS
+#                      xorg-sgml-doctools
+#                           xorgproto
+#
+# The user documentation requires extra tools (and heavy ones): 
+# textproc/fop(1) ("print formatter driven by XSL formatting objects
+# (XSL-FO). A Java application...
+# Since the User level documentation changes rarely and since it
+# requires heavy tools to build, it should be generated aside, from
+# time to time, and be at disposal in the resulting formats. Also,
+# due to cross-dependencies, it should be generated _after_
+# installation.
+#
+# XXX LEGACY: we make nothing of LEGACY data (xorgproto).
+#	- xorgproto: Xprint?
+#
+# XXX generated doc: For the moment, source doc files are copied but the
+# documentation is not generated.
+#
+# CPPFLAGS is adjusted to point to $X11SRCDIR/xorgproto/include and
+# $OBJDIR/X11/xorgproto/include.
+#
+# GENERATED
+# The pkgconfig files have to be processed.
+@ d * * $PROJECTDIR/X11/xorg-sgml-doctools/ *
+@ d * * $PROJECTDIR/X11/xorg-sgml-doctools/masterdb/ *
+@ d * * $PROJECTDIR/X11/xorgproto/ *
+@ d * * $PROJECTDIR/X11/xorgproto/include/X11/ *
+
+# Hierarchy.
+#
++ d $USER0:$GROUP0 755 * $X11DIR/
++ d $USER0:$GROUP0 755 * $X11DIR/include/
++ d $USER0:$GROUP0 755 * $X11DIR/include/GL/
++ d $USER0:$GROUP0 755 * $X11DIR/include/GL/internal/
++ d $USER0:$GROUP0 755 * $X11DIR/include/X11/
++ d $USER0:$GROUP0 755 * $X11DIR/include/X11/dri/
++ d $USER0:$GROUP0 755 * $X11DIR/include/X11/extensions/
++ d $USER0:$GROUP0 755 * $X11DIR/include/X11/fonts/
++ d $USER0:$GROUP0 755 * $X11DIR/share/
++ d $USER0:$GROUP0 755 * $X11DIR/share/doc/
++ d $USER0:$GROUP0 755 * $X11DIR/share/doc/xorgproto/
++ d $USER0:$GROUP0 755 * $X11DIR/share/doc/xproto/
+# Hier for the SGML docs.
++ d $USER0:$GROUP0 755 * $X11DIR/share/sgml/
++ d $USER0:$GROUP0 755 * $X11DIR/share/sgml/X11/
++ d $USER0:$GROUP0 755 * $X11DIR/share/sgml/X11/dbs
+
+
+# xorg-sgml-doctools
+#
++ f $USER0:$GROUP0 444 $OBJDIR/xorg-sgml-doctools/xorg-sgml-doctools.pc $TARGETPKGDIR/lib/pkgconfig/xorg-sgml-doctools.pc
++ f $USER0:$GROUP0 444 $OBJDIR/xorg-sgml-doctools/masterdb/masterdb.html.sgml $TARGETPKGDIR/share/sgml/X11/dbs/masterdb.html.sgml
++ f $USER0:$GROUP0 444 $OBJDIR/xorg-sgml-doctools/masterdb/masterdb.pdf.sgml $TARGETPKGDIR/share/sgml/X11/dbs/masterdb.pdf.sgml
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorg-sgml-doctools/defs.ent $X11DIR/share/sgml/X11/defs.ent
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorg-sgml-doctools/xorg.css $X11DIR/share/sgml/X11/xorg.css
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorg-sgml-doctools/xorg.xsl $X11DIR/share/sgml/X11/xorg.xsl
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorg-sgml-doctools/xorg-xhtml.xsl $X11DIR/share/sgml/X11/xorg-xhtml.xsl
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorg-sgml-doctools/xorg-chunk.xsl $X11DIR/share/sgml/X11/xorg-chunk.xsl
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorg-sgml-doctools/xorg-fo.xsl $X11DIR/share/sgml/X11/xorg-fo.xsl
+
+# xorgproto
+# Headers
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/GL/glxint.h $X11DIR/include/GL/glxint.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/GL/glxmd.h $X11DIR/include/GL/glxmd.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/GL/glxproto.h $X11DIR/include/GL/glxproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/GL/glxtokens.h $X11DIR/include/GL/glxtokens.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/GL/internal/glcore.h $X11DIR/include/GL/internal/glcore.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/DECkeysym.h $X11DIR/include/X11/DECkeysym.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/HPkeysym.h $X11DIR/include/X11/HPkeysym.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/Sunkeysym.h $X11DIR/include/X11/Sunkeysym.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/X.h $X11DIR/include/X11/X.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/XF86keysym.h $X11DIR/include/X11/XF86keysym.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/XWDFile.h $X11DIR/include/X11/XWDFile.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/Xalloca.h $X11DIR/include/X11/Xalloca.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/Xarch.h $X11DIR/include/X11/Xarch.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/Xatom.h $X11DIR/include/X11/Xatom.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/Xdefs.h $X11DIR/include/X11/Xdefs.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/Xfuncproto.h $X11DIR/include/X11/Xfuncproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/Xfuncs.h $X11DIR/include/X11/Xfuncs.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/Xmd.h $X11DIR/include/X11/Xmd.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/Xos.h $X11DIR/include/X11/Xos.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/Xos_r.h $X11DIR/include/X11/Xos_r.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/Xosdefs.h $X11DIR/include/X11/Xosdefs.h
++ f $USER0:$GROUP0 444 $OBJDIR/xorgproto/include/X11/Xpoll.h $X11DIR/include/X11/Xpoll.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/Xproto.h $X11DIR/include/X11/Xproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/Xprotostr.h $X11DIR/include/X11/Xprotostr.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/Xthreads.h $X11DIR/include/X11/Xthreads.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/Xw32defs.h $X11DIR/include/X11/Xw32defs.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/Xwindows.h $X11DIR/include/X11/Xwindows.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/Xwinsock.h $X11DIR/include/X11/Xwinsock.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/ap_keysym.h $X11DIR/include/X11/ap_keysym.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/dri/xf86dri.h $X11DIR/include/X11/dri/xf86dri.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/dri/xf86driproto.h $X11DIR/include/X11/dri/xf86driproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/dri/xf86dristr.h $X11DIR/include/X11/dri/xf86dristr.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/EVI.h $X11DIR/include/X11/extensions/EVI.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/EVIproto.h $X11DIR/include/X11/extensions/EVIproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/Print.h $X11DIR/include/X11/extensions/Print.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/Printstr.h $X11DIR/include/X11/extensions/Printstr.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/XI.h $X11DIR/include/X11/extensions/XI.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/XI2.h $X11DIR/include/X11/extensions/XI2.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/XI2proto.h $X11DIR/include/X11/extensions/XI2proto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/XIproto.h $X11DIR/include/X11/extensions/XIproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/XKB.h $X11DIR/include/X11/extensions/XKB.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/XKBgeom.h $X11DIR/include/X11/extensions/XKBgeom.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/XKBproto.h $X11DIR/include/X11/extensions/XKBproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/XKBsrv.h $X11DIR/include/X11/extensions/XKBsrv.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/XKBstr.h $X11DIR/include/X11/extensions/XKBstr.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/XResproto.h $X11DIR/include/X11/extensions/XResproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/Xeviestr.h $X11DIR/include/X11/extensions/Xeviestr.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/Xv.h $X11DIR/include/X11/extensions/Xv.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/XvMC.h $X11DIR/include/X11/extensions/XvMC.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/XvMCproto.h $X11DIR/include/X11/extensions/XvMCproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/Xvproto.h $X11DIR/include/X11/extensions/Xvproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/ag.h $X11DIR/include/X11/extensions/ag.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/agproto.h $X11DIR/include/X11/extensions/agproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/applewmconst.h $X11DIR/include/X11/extensions/applewmconst.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/applewmproto.h $X11DIR/include/X11/extensions/applewmproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/bigreqsproto.h $X11DIR/include/X11/extensions/bigreqsproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/bigreqstr.h $X11DIR/include/X11/extensions/bigreqstr.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/composite.h $X11DIR/include/X11/extensions/composite.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/compositeproto.h $X11DIR/include/X11/extensions/compositeproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/cup.h $X11DIR/include/X11/extensions/cup.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/cupproto.h $X11DIR/include/X11/extensions/cupproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/damageproto.h $X11DIR/include/X11/extensions/damageproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/damagewire.h $X11DIR/include/X11/extensions/damagewire.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/dbe.h $X11DIR/include/X11/extensions/dbe.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/dbeproto.h $X11DIR/include/X11/extensions/dbeproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/dmx.h $X11DIR/include/X11/extensions/dmx.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/dmxproto.h $X11DIR/include/X11/extensions/dmxproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/dpmsconst.h $X11DIR/include/X11/extensions/dpmsconst.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/dpmsproto.h $X11DIR/include/X11/extensions/dpmsproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/dri2proto.h $X11DIR/include/X11/extensions/dri2proto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/dri2tokens.h $X11DIR/include/X11/extensions/dri2tokens.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/dri3proto.h $X11DIR/include/X11/extensions/dri3proto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/evieproto.h $X11DIR/include/X11/extensions/evieproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/fontcache.h $X11DIR/include/X11/extensions/fontcache.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/fontcacheP.h $X11DIR/include/X11/extensions/fontcacheP.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/fontcachstr.h $X11DIR/include/X11/extensions/fontcachstr.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/ge.h $X11DIR/include/X11/extensions/ge.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/geproto.h $X11DIR/include/X11/extensions/geproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/lbx.h $X11DIR/include/X11/extensions/lbx.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/lbxproto.h $X11DIR/include/X11/extensions/lbxproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/lgewire.h $X11DIR/include/X11/extensions/lgewire.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/mitmiscconst.h $X11DIR/include/X11/extensions/mitmiscconst.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/mitmiscproto.h $X11DIR/include/X11/extensions/mitmiscproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/multibufconst.h $X11DIR/include/X11/extensions/multibufconst.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/multibufproto.h $X11DIR/include/X11/extensions/multibufproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/panoramiXproto.h $X11DIR/include/X11/extensions/panoramiXproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/presentproto.h $X11DIR/include/X11/extensions/presentproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/presenttokens.h $X11DIR/include/X11/extensions/presenttokens.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/randr.h $X11DIR/include/X11/extensions/randr.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/randrproto.h $X11DIR/include/X11/extensions/randrproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/recordconst.h $X11DIR/include/X11/extensions/recordconst.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/recordproto.h $X11DIR/include/X11/extensions/recordproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/recordstr.h $X11DIR/include/X11/extensions/recordstr.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/render.h $X11DIR/include/X11/extensions/render.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/renderproto.h $X11DIR/include/X11/extensions/renderproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/saver.h $X11DIR/include/X11/extensions/saver.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/saverproto.h $X11DIR/include/X11/extensions/saverproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/secur.h $X11DIR/include/X11/extensions/secur.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/securproto.h $X11DIR/include/X11/extensions/securproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/shapeconst.h $X11DIR/include/X11/extensions/shapeconst.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/shapeproto.h $X11DIR/include/X11/extensions/shapeproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/shapestr.h $X11DIR/include/X11/extensions/shapestr.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/shm.h $X11DIR/include/X11/extensions/shm.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/shmproto.h $X11DIR/include/X11/extensions/shmproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/shmstr.h $X11DIR/include/X11/extensions/shmstr.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/syncconst.h $X11DIR/include/X11/extensions/syncconst.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/syncproto.h $X11DIR/include/X11/extensions/syncproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/syncstr.h $X11DIR/include/X11/extensions/syncstr.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/vldXvMC.h $X11DIR/include/X11/extensions/vldXvMC.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/windowswm.h $X11DIR/include/X11/extensions/windowswm.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/windowswmstr.h $X11DIR/include/X11/extensions/windowswmstr.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xcalibrateproto.h $X11DIR/include/X11/extensions/xcalibrateproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xcalibratewire.h $X11DIR/include/X11/extensions/xcalibratewire.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xcmiscproto.h $X11DIR/include/X11/extensions/xcmiscproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xcmiscstr.h $X11DIR/include/X11/extensions/xcmiscstr.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xf86bigfont.h $X11DIR/include/X11/extensions/xf86bigfont.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xf86bigfproto.h $X11DIR/include/X11/extensions/xf86bigfproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xf86bigfstr.h $X11DIR/include/X11/extensions/xf86bigfstr.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xf86dga.h $X11DIR/include/X11/extensions/xf86dga.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xf86dga1const.h $X11DIR/include/X11/extensions/xf86dga1const.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xf86dga1proto.h $X11DIR/include/X11/extensions/xf86dga1proto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xf86dga1str.h $X11DIR/include/X11/extensions/xf86dga1str.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xf86dgaconst.h $X11DIR/include/X11/extensions/xf86dgaconst.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xf86dgaproto.h $X11DIR/include/X11/extensions/xf86dgaproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xf86dgastr.h $X11DIR/include/X11/extensions/xf86dgastr.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xf86misc.h $X11DIR/include/X11/extensions/xf86misc.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xf86mscstr.h $X11DIR/include/X11/extensions/xf86mscstr.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xf86rush.h $X11DIR/include/X11/extensions/xf86rush.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xf86rushstr.h $X11DIR/include/X11/extensions/xf86rushstr.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xf86vm.h $X11DIR/include/X11/extensions/xf86vm.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xf86vmproto.h $X11DIR/include/X11/extensions/xf86vmproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xf86vmstr.h $X11DIR/include/X11/extensions/xf86vmstr.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xfixesproto.h $X11DIR/include/X11/extensions/xfixesproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xfixeswire.h $X11DIR/include/X11/extensions/xfixeswire.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xtestconst.h $X11DIR/include/X11/extensions/xtestconst.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xtestext1const.h $X11DIR/include/X11/extensions/xtestext1const.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xtestext1proto.h $X11DIR/include/X11/extensions/xtestext1proto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xtestproto.h $X11DIR/include/X11/extensions/xtestproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xtrapbits.h $X11DIR/include/X11/extensions/xtrapbits.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xtrapddmi.h $X11DIR/include/X11/extensions/xtrapddmi.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xtrapdi.h $X11DIR/include/X11/extensions/xtrapdi.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xtrapemacros.h $X11DIR/include/X11/extensions/xtrapemacros.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xtraplib.h $X11DIR/include/X11/extensions/xtraplib.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xtraplibp.h $X11DIR/include/X11/extensions/xtraplibp.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xtrapproto.h $X11DIR/include/X11/extensions/xtrapproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/extensions/xwaylandproto.h $X11DIR/include/X11/extensions/xwaylandproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/fonts/FS.h $X11DIR/include/X11/fonts/FS.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/fonts/FSproto.h $X11DIR/include/X11/fonts/FSproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/fonts/font.h $X11DIR/include/X11/fonts/font.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/fonts/fontproto.h $X11DIR/include/X11/fonts/fontproto.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/fonts/fontstruct.h $X11DIR/include/X11/fonts/fontstruct.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/fonts/fsmasks.h $X11DIR/include/X11/fonts/fsmasks.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/keysym.h $X11DIR/include/X11/keysym.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/keysymdef.h $X11DIR/include/X11/keysymdef.h
+#
+# Documentation.
+#
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/compositeproto.txt $X11DIR/share/doc/xorgproto/compositeproto.txt
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/damageproto.txt $X11DIR/share/doc/xorgproto/damageproto.txt
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/dri2proto.txt $X11DIR/share/doc/xorgproto/dri2proto.txt
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/dri3proto.txt $X11DIR/share/doc/xorgproto/dri3proto.txt
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/fixesproto.txt $X11DIR/share/doc/xorgproto/fixesproto.txt
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/presentproto.txt $X11DIR/share/doc/xorgproto/presentproto.txt
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/randrproto.txt $X11DIR/share/doc/xorgproto/randrproto.txt
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/renderproto.txt $X11DIR/share/doc/xorgproto/renderproto.txt
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/resproto.txt $X11DIR/share/doc/xorgproto/resproto.txt
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/xv-protocol-v2.txt $X11DIR/share/doc/xorgproto/xv-protocol-v2.txt
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/xwaylandproto.txt $X11DIR/share/doc/xorgproto/xwaylandproto.txt

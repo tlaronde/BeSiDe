@@ -1,0 +1,27 @@
+#!/bin/sh -e
+# PROTON post-install program 
+#
+#  Copyright 2023--2024 Thierry LARONDE <tlaronde@polynum.com>
+#  All rights reserved. 
+#  
+#  This work is under the KerGIS Public Licence v1.0
+# 
+#  See the COPYRIGHT file at the root of the source directory or see
+#  http://www.kergis.org/licence.txt for complete information.
+# 
+# !!!THIS SOFTWARE IS PROVIDED ``AS IS'' WITHOUT ANY WARRANTIES!!! 
+#                      USE IT AT YOUR OWN RISK 
+
+cat - <<EOT >&2
+
+==================================================================
+
+             PROTON X11 libes and programs installed
+
+Add $TARGETPKGDIR/lib/pkgconfig to PKG_CONFIG_PATH or PKG_CONFIG_LIBDIR.
+ 
+==================================================================
+
+EOT
+
+exit 0
