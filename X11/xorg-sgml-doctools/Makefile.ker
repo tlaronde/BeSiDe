@@ -1,0 +1,13 @@
+DATA = xorg-sgml-doctools.pc
+
+PKGCONF_TEMPLATE = \
+	$(X11SRCDIR)/xorg-sgml-doctools/xorg-sgml-doctools.pc.in
+
+all: $(DATA)
+
+$(DATA): $(PKGCONF_TEMPLATE)
+	sed -e 's!@prefix@!$(X11DIR)!' \
+		-e 's!@datarootdir@!$${prefix}/share!' \
+		-e 's!@sgmlrootdir@!$${datarootdir}/sgml!' \
+		-e 's!@PACKAGE_VERSION@!1.12!' \
+		$(PKGCONF_TEMPLATE) >$@

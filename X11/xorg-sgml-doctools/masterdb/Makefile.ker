@@ -1,0 +1,19 @@
+DATA = xorg-sgml-masterdb
+
+MASTERDB_TEMPLATE = \
+	$(X11SRCDIR)/xorg-sgml-doctools/masterdb/masterdb.xml
+
+all: $(DATA)
+
+$(DATA): masterdb.html.xml masterdb.pdf.xml
+
+
+masterdb.html.xml: $(MASTERDB_TEMPLATE)
+	sed -e 's!@db@!html!' \
+		-e 's!@datarootdir@!$${prefix}/share!' \
+		$(MASTERDB_TEMPLATE) >$@
+
+masterdb.pdf.xml: $(MASTERDB_TEMPLATE)
+	sed -e 's!@db@!pdf!' \
+		-e 's!@datarootdir@!$${prefix}/share!' \
+		$(MASTERDB_TEMPLATE) >$@

@@ -1,0 +1,12 @@
+DATA = Xpoll.h
+
+GENERATED_HEADER = $(X11SRCDIR)/xorgproto/include/X11/Xpoll.h.in 
+
+all: $(DATA)
+
+$(DATA): $(GENERATED_HEADER)
+	for file in $(GENERATED_HEADER); do \
+		ftarget=$$(basename "$$file");\
+		sed -e 's!@USE_FDS_BITS@!$(USE_FDS_BITS)!' "$$file"\
+			>$${ftarget%.in}; \
+	done

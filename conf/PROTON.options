@@ -1,0 +1,17 @@
+            Here are the PROTON user definable options
+
+TARGETPKGDIR [/usr/local]
+	Where the package installation will be rooted. It is not
+	created at install and has to exist and be writable by 
+	USER0.
+
+USER0 [default: user compiling]
+	USER0 will be the owner of the file hierarchy. By default, it
+	is set to the user compiling (has obviously to exist on the
+	TARGET system since the user is not created at installation
+	time).
+
+X11SRCDIR [../X11]
+	Where the X11 git sources are. If relative, relative to
+	PROJECTDIR.
+

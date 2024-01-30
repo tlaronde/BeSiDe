@@ -1,0 +1,55 @@
+DATA = pkgconf_files
+
+PKGCONF_FILES = \
+	$(X11SRCDIR)/xorgproto/applewmproto.pc.in \
+	$(X11SRCDIR)/xorgproto/bigreqsproto.pc.in \
+	$(X11SRCDIR)/xorgproto/compositeproto.pc.in \
+	$(X11SRCDIR)/xorgproto/damageproto.pc.in \
+	$(X11SRCDIR)/xorgproto/dmxproto.pc.in \
+	$(X11SRCDIR)/xorgproto/dpmsproto.pc.in \
+	$(X11SRCDIR)/xorgproto/dri2proto.pc.in \
+	$(X11SRCDIR)/xorgproto/dri3proto.pc.in \
+	$(X11SRCDIR)/xorgproto/fixesproto.pc.in \
+	$(X11SRCDIR)/xorgproto/fontsproto.pc.in \
+	$(X11SRCDIR)/xorgproto/glproto.pc.in \
+	$(X11SRCDIR)/xorgproto/inputproto.pc.in \
+	$(X11SRCDIR)/xorgproto/kbproto.pc.in \
+	$(X11SRCDIR)/xorgproto/presentproto.pc.in \
+	$(X11SRCDIR)/xorgproto/randrproto.pc.in \
+	$(X11SRCDIR)/xorgproto/recordproto.pc.in \
+	$(X11SRCDIR)/xorgproto/renderproto.pc.in \
+	$(X11SRCDIR)/xorgproto/resourceproto.pc.in \
+	$(X11SRCDIR)/xorgproto/scrnsaverproto.pc.in \
+	$(X11SRCDIR)/xorgproto/videoproto.pc.in \
+	$(X11SRCDIR)/xorgproto/xcmiscproto.pc.in \
+	$(X11SRCDIR)/xorgproto/xextproto.pc.in \
+	$(X11SRCDIR)/xorgproto/xf86bigfontproto.pc.in \
+	$(X11SRCDIR)/xorgproto/xf86dgaproto.pc.in \
+	$(X11SRCDIR)/xorgproto/xf86driproto.pc.in \
+	$(X11SRCDIR)/xorgproto/xf86vidmodeproto.pc.in \
+	$(X11SRCDIR)/xorgproto/xineramaproto.pc.in \
+	$(X11SRCDIR)/xorgproto/xproto.pc.in \
+	$(X11SRCDIR)/xorgproto/xwaylandproto.pc.in
+
+# For the moment, these are not installed.
+#
+PKGCONF_LEGACY_FILES = \
+	$(X11SRCDIR)/xorgproto/evieproto.pc.in \
+	$(X11SRCDIR)/xorgproto/fontcacheproto.pc.in \
+	$(X11SRCDIR)/xorgproto/lg3dproto.pc.in \
+	$(X11SRCDIR)/xorgproto/printproto.pc.in \
+	$(X11SRCDIR)/xorgproto/trapproto.pc.in \
+	$(X11SRCDIR)/xorgproto/windowswmproto.pc.in \
+	$(X11SRCDIR)/xorgproto/xcalibrateproto.pc.in \
+	$(X11SRCDIR)/xorgproto/xf86miscproto.pc.in \
+	$(X11SRCDIR)/xorgproto/xf86rushproto.pc.in \
+	$(X11SRCDIR)/xorgproto/xproxymngproto.pc.in 
+
+all: $(DATA)
+
+$(DATA): $(PKGCONF_FILES)
+	for file in $(PKGCONF_FILES); do \
+		sed -e 's!@prefix@!$(X11DIR)!' \
+			-e 's!@includedir@!$${prefix}/include!' "$$file"\
+			>$$(basename "$$file" | sed 's/\.in$$//'); \
+	done
