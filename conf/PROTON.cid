@@ -1,0 +1,4 @@
+# This is a sh(1) variables script. The master CID has another syntax.
+USRI=2.27
+PKGNAME=proton
+VENDOR=tsjl

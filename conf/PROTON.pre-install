@@ -1,0 +1,32 @@
+#!/bin/sh -e
+# pre-install PROTON program 
+#
+#  Copyright 2023 Thierry LARONDE <tlaronde@polynum.com>
+#  All rights reserved. 
+#  
+#  This work is under the KerGIS Public Licence v1.0
+# 
+#  See the COPYRIGHT file at the root of the source directory or see
+#  http://www.kergis.org/licence.txt for complete information.
+# 
+# !!!THIS SOFTWARE IS PROVIDED ``AS IS'' WITHOUT ANY WARRANTIES!!! 
+#                      USE IT AT YOUR OWN RISK 
+
+# include admin commands rkcomp wrappers (that includes libsh as well)
+#
+. install_bin/cmds
+
+# include rkinstall config.
+. install_data/rkinstall.cf
+
+# Setting program var for log() leading string.
+#
+program=pre-install
+
+# The pre-install program is called... before installation of the hier
+# and data (defined in map). So we can copy the file to be compared 
+# for testing rkinstall(1) behavior concerning ':' map action.
+#
+log "Nothing to pre-do"
+
+exit 0

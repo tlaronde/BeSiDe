@@ -1,0 +1,8 @@
+CLIB
+	The standard C library
+
+MATHLIB
+	The standard math library
+
+LEXLIB
+	The lex library

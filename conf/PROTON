@@ -1,0 +1,87 @@
+#                 PROTON RISK main config file
+#
+#  Copyright 2023--2024 Thierry LARONDE <tlaronde@polynum.com>
+#  All rights reserved. 
+#  
+#  This work is under the KerGIS Public Licence v1.0
+# 
+#  See the COPYRIGHT file at the root of the source directory or see
+#  http://www.kergis.org/licence.txt for complete information.
+# 
+# !!!THIS SOFTWARE IS PROVIDED ``AS IS'' WITHOUT ANY WARRANTIES!!! 
+#                      USE IT AT YOUR OWN RISK 
+
+#========== THIS KTOOLS API
+RK_API_VERSION=1.20
+
+#========== ADJUST WHEN RELEASING
+# MAJOR.MINOR[.REVISION][STATUS] where STATUS is one of:
+#	if STABLE nothing
+#	BETA -> -BETA
+#	ALPHA -> -ALPHA
+#	CURRENT (development) an uppercase letter indicating an intermediate
+#	stage
+#
+# This is set in CID.
+
+#========== SETTING THE VARIABLES
+
+TARGETPKGDIR=${TARGETPKGDIR:-/usr/local}
+
+# We do not use ": ${VARIABLE:="value"} because '^VARIABLE=' instructs
+# rkconfig(1) to publish the variables. So added variables have to
+# be put at the beginning.
+#
+: ${USER0:=$(id -nu)}
+X11SRCDIR=${X11SRCDIR:-../X11}
+	if test "${X11SRCDIR#/}" = "$X11SRCDIR"; then
+		X11SRCDIR="$PROJECTDIR/$X11SRCDIR"
+	fi
+
+X11DIR="${TARGETPKGDIR}/X11R7"
+
+#========== MAP HANDLING
+#
+# We need to instruct rkconfig(1) to replace some project added
+# variables in the map.
+#
+# Some variables are always added to MAP_REPLACE:
+# PROJECTDIR, OBJDIR, RKLIBDIR, TARGETPKGDIR, TARGETOPDIR, TARGETLIBDIR,
+# TARGETBINDIR, TARGETSBINDIR, TARGETDOCDIR, USER0, GROUP0.
+#
+# The other have to be listed in [optional] PROJECT.replace.
+
+# We can set lists of keyword and use MAP_GREPLACE to add as many
+# substituted lines as there are items in the list, taking the
+# prototype line having the list variable name in it. This will work
+# for conditionals too.
+#
+# They go in [optional] PROJECT.greplace.
+
+: ${MAPS:="$PROJECT.map"\
+	"$PROJECTDIR/conf/X11_0.map"}
+
+#========== COMPILATION AND LIBRARIES
+#
+# X11 requirements.
+#
+
+USE_FDS_BITS=	# exported and required
+if rk_struct_has_member SYS sys/select.h fd_set fds_bits; then
+	USE_FDS_BITS=fds_bits
+elif rk_struct_has_member SYS sys/select.h fd_set __fds_bits; then
+	USE_FDS_BITS=__fds_bits
+fi
+
+# X11 all depend on the fundamental proto
+CPPFLAGS="$CPPFLAGS -I$X11SRCDIR/xorgproto/include -I$OBJDIR/X11/xorgproto/include"
+
+#========== SANITY CHECKS
+# Verify that we have the mandatory libes
+# We do not use liby (it is so light that this is generally useless)
+#
+# The root PROJECT sets REQUIRED. An included module has to augment it.
+# REQUIRED="$REQUIRED name [name...]"
+#
+REQUIRED="USE_FDS_BITS"
+
