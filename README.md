@@ -1,13 +1,16 @@
 WHAT IS THERE
 =============
 
-This is a fork of the NETBSD src tree providing on different branches some work I (Thierry Laronde [TL]) have done on various subjects.
+This is a fork of the NETBSD src tree (The NetBSD developers hence
+have provided the huge majority of what is here) providing on an uniq
+branch for now the integrated modifications and contributions I have
+donc around NetBSD. It is WIP.
 
 **For the bulk of the work, it is synchronized with the NetBSD git src
 master (so the "contributors" on the left of the page are not
 "contributors" of this fork, but authors of modifications
 reflected in this tree every time I merge the NetBSD src tree in this
-fork.**
+fork).**
 
 At the root of the tree:
 
