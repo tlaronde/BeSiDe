@@ -1,0 +1,21 @@
+#                            X11 map
+#                    MAIN INSTALLATION TREE
+
+# Hierarchy.
+#
++ d $USER0:$GROUP0 755 * $X11DIR/
++ d $USER0:$GROUP0 755 * $X11DIR/include/
++ d $USER0:$GROUP0 755 * $X11DIR/include/GL/
++ d $USER0:$GROUP0 755 * $X11DIR/include/GL/internal/
++ d $USER0:$GROUP0 755 * $X11DIR/include/X11/
++ d $USER0:$GROUP0 755 * $X11DIR/include/X11/dri/
++ d $USER0:$GROUP0 755 * $X11DIR/include/X11/extensions/
++ d $USER0:$GROUP0 755 * $X11DIR/include/X11/fonts/
++ d $USER0:$GROUP0 755 * $X11DIR/share/
++ d $USER0:$GROUP0 755 * $X11DIR/share/doc/
++ d $USER0:$GROUP0 755 * $X11DIR/share/doc/xorgproto/
+# Hier for the SGML docs.
++ d $USER0:$GROUP0 755 * $X11DIR/share/sgml/
++ d $USER0:$GROUP0 755 * $X11DIR/share/sgml/X11/
++ d $USER0:$GROUP0 755 * $X11DIR/share/sgml/X11/dbs
+

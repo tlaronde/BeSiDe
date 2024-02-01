@@ -58,8 +58,16 @@ X11DIR="${TARGETPKGDIR}/X11R7"
 #
 # They go in [optional] PROJECT.greplace.
 
-: ${MAPS:="$PROJECT.map"\
-	"$PROJECTDIR/conf/X11_0.map"}
+: ${MAPS:="$PROJECT.map"}
+
+# Add the X11 maps in topological order.
+#
+	MAPS="$MAPS $PROJECTDIR/conf/X11.map"
+	i=0
+while test $i -le 1; do
+	MAPS="$MAPS $PROJECTDIR/conf/X11_$(printf "%03d" $i).map"
+	i=$(($i + 1))
+done
 
 #========== COMPILATION AND LIBRARIES
 #
@@ -73,8 +81,10 @@ elif rk_struct_has_member SYS sys/select.h fd_set __fds_bits; then
 	USE_FDS_BITS=__fds_bits
 fi
 
-# X11 all depend on the fundamental proto
-CPPFLAGS="$CPPFLAGS -I$X11SRCDIR/xorgproto/include -I$OBJDIR/X11/xorgproto/include"
+# X11 all depend on the fundamental proto. Generated headers are
+# placed in $OBJDIR/include/X11.
+#
+CPPFLAGS="$CPPFLAGS -I$X11SRCDIR/xorgproto/include -I$OBJDIR/include/X11"
 
 #========== SANITY CHECKS
 # Verify that we have the mandatory libes
