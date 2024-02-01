@@ -1,0 +1,32 @@
+#                            X11 map
+#                     DOC FUNDAMENTAL FILES
+
+#
+# The user documentation requires extra tools (and heavy ones): 
+# textproc/fop(1) ("print formatter driven by XSL formatting objects
+# (XSL-FO). A Java application...
+# Since the User level documentation changes rarely and since it
+# requires heavy tools to build, it should be generated aside, from
+# time to time, and be at disposal in the resulting formats. Also,
+# due to cross-dependencies, it should be generated _after_
+# installation.
+#
+# XXX generated doc: For the moment, source doc files are copied but the
+# documentation is not generated.
+#
+# GENERATED
+# The pkgconfig files have to be processed.
+@ d * * $PROJECTDIR/X11/xorg-sgml-doctools/ *
+@ d * * $PROJECTDIR/X11/xorg-sgml-doctools/masterdb/ *
+
+# INSTALLED
++ f $USER0:$GROUP0 444 $OBJDIR/X11/xorg-sgml-doctools/xorg-sgml-doctools.pc $TARGETPKGDIR/lib/pkgconfig/xorg-sgml-doctools.pc
++ f $USER0:$GROUP0 444 $OBJDIR/X11/xorg-sgml-doctools/masterdb/masterdb.html.xml $X11DIR/share/sgml/X11/dbs/masterdb.html.xml
++ f $USER0:$GROUP0 444 $OBJDIR/X11/xorg-sgml-doctools/masterdb/masterdb.pdf.xml $X11DIR/share/sgml/X11/dbs/masterdb.pdf.xml
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorg-sgml-doctools/defs.ent $X11DIR/share/sgml/X11/defs.ent
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorg-sgml-doctools/xorg.css $X11DIR/share/sgml/X11/xorg.css
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorg-sgml-doctools/xorg.xsl $X11DIR/share/sgml/X11/xorg.xsl
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorg-sgml-doctools/xorg-xhtml.xsl $X11DIR/share/sgml/X11/xorg-xhtml.xsl
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorg-sgml-doctools/xorg-chunk.xsl $X11DIR/share/sgml/X11/xorg-chunk.xsl
++ f $USER0:$GROUP0 444 $X11SRCDIR/xorg-sgml-doctools/xorg-fo.xsl $X11DIR/share/sgml/X11/xorg-fo.xsl
+
