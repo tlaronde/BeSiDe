@@ -1,12 +1,15 @@
-DATA = Xpoll.h
+DATA = $(HEADERS)
 
-GENERATED_HEADER = $(X11SRCDIR)/xorgproto/include/X11/Xpoll.h.in 
+TEMPLATE_HEADERS = $(X11SRCDIR)/xorgproto/include/X11/Xpoll.h.in 
+
+HEADERS = $(OBJDIR)/include/X11/Xpoll.h
 
 all: $(DATA)
 
-$(DATA): $(GENERATED_HEADER)
-	for file in $(GENERATED_HEADER); do \
+$(DATA): $(TEMPLATE_HEADERS)
+	mkdir -p $(OBJDIR)/include/X11
+	for file in $(TEMPLATE_HEADERS); do \
 		ftarget=$$(basename "$$file");\
 		sed -e 's!@USE_FDS_BITS@!$(USE_FDS_BITS)!' "$$file"\
-			>$${ftarget%.in}; \
+			>$(OBJDIR)/include/X11/$${ftarget%.in}; \
 	done

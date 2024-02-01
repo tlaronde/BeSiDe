@@ -1,7 +1,7 @@
 #                            X11 map
-#                  DOC AND FUNDAMENTAL PROTOS
-#                      xorg-sgml-doctools
+#                      FUNDAMENTAL PROTOS
 #                           xorgproto
+#
 #
 # The user documentation requires extra tools (and heavy ones): 
 # textproc/fop(1) ("print formatter driven by XSL formatting objects
@@ -19,49 +19,14 @@
 # documentation is not generated.
 #
 # CPPFLAGS is adjusted to point to $X11SRCDIR/xorgproto/include and
-# $OBJDIR/X11/xorgproto/include.
+# $OBJDIR/include/X11
 #
 # GENERATED
 # The pkgconfig files have to be processed.
-@ d * * $PROJECTDIR/X11/xorg-sgml-doctools/ *
-@ d * * $PROJECTDIR/X11/xorg-sgml-doctools/masterdb/ *
 @ d * * $PROJECTDIR/X11/xorgproto/ *
 @ d * * $PROJECTDIR/X11/xorgproto/include/X11/ *
 
-# Hierarchy.
-#
-+ d $USER0:$GROUP0 755 * $X11DIR/
-+ d $USER0:$GROUP0 755 * $X11DIR/include/
-+ d $USER0:$GROUP0 755 * $X11DIR/include/GL/
-+ d $USER0:$GROUP0 755 * $X11DIR/include/GL/internal/
-+ d $USER0:$GROUP0 755 * $X11DIR/include/X11/
-+ d $USER0:$GROUP0 755 * $X11DIR/include/X11/dri/
-+ d $USER0:$GROUP0 755 * $X11DIR/include/X11/extensions/
-+ d $USER0:$GROUP0 755 * $X11DIR/include/X11/fonts/
-+ d $USER0:$GROUP0 755 * $X11DIR/share/
-+ d $USER0:$GROUP0 755 * $X11DIR/share/doc/
-+ d $USER0:$GROUP0 755 * $X11DIR/share/doc/xorgproto/
-+ d $USER0:$GROUP0 755 * $X11DIR/share/doc/xproto/
-# Hier for the SGML docs.
-+ d $USER0:$GROUP0 755 * $X11DIR/share/sgml/
-+ d $USER0:$GROUP0 755 * $X11DIR/share/sgml/X11/
-+ d $USER0:$GROUP0 755 * $X11DIR/share/sgml/X11/dbs
-
-
-# xorg-sgml-doctools
-#
-+ f $USER0:$GROUP0 444 $OBJDIR/xorg-sgml-doctools/xorg-sgml-doctools.pc $TARGETPKGDIR/lib/pkgconfig/xorg-sgml-doctools.pc
-+ f $USER0:$GROUP0 444 $OBJDIR/xorg-sgml-doctools/masterdb/masterdb.html.sgml $TARGETPKGDIR/share/sgml/X11/dbs/masterdb.html.sgml
-+ f $USER0:$GROUP0 444 $OBJDIR/xorg-sgml-doctools/masterdb/masterdb.pdf.sgml $TARGETPKGDIR/share/sgml/X11/dbs/masterdb.pdf.sgml
-+ f $USER0:$GROUP0 444 $X11SRCDIR/xorg-sgml-doctools/defs.ent $X11DIR/share/sgml/X11/defs.ent
-+ f $USER0:$GROUP0 444 $X11SRCDIR/xorg-sgml-doctools/xorg.css $X11DIR/share/sgml/X11/xorg.css
-+ f $USER0:$GROUP0 444 $X11SRCDIR/xorg-sgml-doctools/xorg.xsl $X11DIR/share/sgml/X11/xorg.xsl
-+ f $USER0:$GROUP0 444 $X11SRCDIR/xorg-sgml-doctools/xorg-xhtml.xsl $X11DIR/share/sgml/X11/xorg-xhtml.xsl
-+ f $USER0:$GROUP0 444 $X11SRCDIR/xorg-sgml-doctools/xorg-chunk.xsl $X11DIR/share/sgml/X11/xorg-chunk.xsl
-+ f $USER0:$GROUP0 444 $X11SRCDIR/xorg-sgml-doctools/xorg-fo.xsl $X11DIR/share/sgml/X11/xorg-fo.xsl
-
-# xorgproto
-# Headers
+# INSTALLED
 + f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/GL/glxint.h $X11DIR/include/GL/glxint.h
 + f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/GL/glxmd.h $X11DIR/include/GL/glxmd.h
 + f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/GL/glxproto.h $X11DIR/include/GL/glxproto.h
@@ -83,7 +48,7 @@
 + f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/Xos.h $X11DIR/include/X11/Xos.h
 + f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/Xos_r.h $X11DIR/include/X11/Xos_r.h
 + f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/Xosdefs.h $X11DIR/include/X11/Xosdefs.h
-+ f $USER0:$GROUP0 444 $OBJDIR/xorgproto/include/X11/Xpoll.h $X11DIR/include/X11/Xpoll.h
++ f $USER0:$GROUP0 444 $OBJDIR/include/X11/Xpoll.h $X11DIR/include/X11/Xpoll.h
 + f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/Xproto.h $X11DIR/include/X11/Xproto.h
 + f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/Xprotostr.h $X11DIR/include/X11/Xprotostr.h
 + f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/include/X11/Xthreads.h $X11DIR/include/X11/Xthreads.h
