@@ -7,7 +7,7 @@ branch for now the integrated modifications and contributions I have
 donc around NetBSD. It is WIP.
 
 **For the bulk of the work, it is synchronized with the NetBSD git src
-master (so the "contributors" on the left of the page are not
+master (so the "contributors" on the right of the page are not
 "contributors" of this fork, but authors of modifications
 reflected in this tree every time I merge the NetBSD src tree in this
 fork).**
