@@ -1,0 +1,26 @@
+DATA = libxau_man
+
+MAN_FILES = \
+	$(X11SRCDIR)/libXau/man/Xau.man \
+	$(X11SRCDIR)/libXau/man/XauDisposeAuth.man \
+	$(X11SRCDIR)/libXau/man/XauFileName.man \
+	$(X11SRCDIR)/libXau/man/XauGetAuthByAddr.man \
+	$(X11SRCDIR)/libXau/man/XauGetBestAuthByAddr.man \
+	$(X11SRCDIR)/libXau/man/XauLockAuth.man \
+	$(X11SRCDIR)/libXau/man/XauReadAuth.man \
+	$(X11SRCDIR)/libXau/man/XauUnlockAuth.man \
+	$(X11SRCDIR)/libXau/man/XauWriteAuth.man 
+
+all: $(DATA)
+
+$(DATA): $(MAN_FILES) version.data
+	for file in $(MAN_FILES); do \
+		sed -e 's!__xorgversion__!"libXau '"$$(cat version.data)"'" "X Version 11"!" \
+			-e 's!__libmansuffix__!3!' \
+			>$$(basename "$$file"); \
+	done
+
+version.data: $(X11SRCDIR)/libXau/meson.build
+	$(TOOLDIR)/sys/posix/sh1/rkmeson $(X11SRCDIR)/libXau/meson.build \
+		| sed -n "s!^RK_MESON_version='\\(*\\)'\$!\\\\1!p" \
+		>$@
