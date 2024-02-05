@@ -195,3 +195,34 @@
 + f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/resproto.txt $X11DIR/share/doc/xorgproto/resproto.txt
 + f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/xv-protocol-v2.txt $X11DIR/share/doc/xorgproto/xv-protocol-v2.txt
 + f $USER0:$GROUP0 444 $X11SRCDIR/xorgproto/xwaylandproto.txt $X11DIR/share/doc/xorgproto/xwaylandproto.txt
+
+# pkgconfig
++ f $USER0:$GROUP0 444 $OBJDIR/xorgproto/applewmproto.pc $TARGETPKGDIR/lib/pkgconfig/applewmproto.pc
++ f $USER0:$GROUP0 444 $OBJDIR/xorgproto/bigreqsproto.pc $TARGETPKGDIR/lib/pkgconfig/bigreqsproto.pc
++ f $USER0:$GROUP0 444 $OBJDIR/xorgproto/compositeproto.pc $TARGETPKGDIR/lib/pkgconfig/compositeproto.pc
++ f $USER0:$GROUP0 444 $OBJDIR/xorgproto/damageproto.pc $TARGETPKGDIR/lib/pkgconfig/damageproto.pc
++ f $USER0:$GROUP0 444 $OBJDIR/xorgproto/dmxproto.pc $TARGETPKGDIR/lib/pkgconfig/dmxproto.pc
++ f $USER0:$GROUP0 444 $OBJDIR/xorgproto/dpmsproto.pc $TARGETPKGDIR/lib/pkgconfig/dpmsproto.pc
++ f $USER0:$GROUP0 444 $OBJDIR/xorgproto/dri2proto.pc $TARGETPKGDIR/lib/pkgconfig/dri2proto.pc
++ f $USER0:$GROUP0 444 $OBJDIR/xorgproto/dri3proto.pc $TARGETPKGDIR/lib/pkgconfig/dri3proto.pc
++ f $USER0:$GROUP0 444 $OBJDIR/xorgproto/fixesproto.pc $TARGETPKGDIR/lib/pkgconfig/fixesproto.pc
++ f $USER0:$GROUP0 444 $OBJDIR/xorgproto/fontsproto.pc $TARGETPKGDIR/lib/pkgconfig/fontsproto.pc
++ f $USER0:$GROUP0 444 $OBJDIR/xorgproto/glproto.pc $TARGETPKGDIR/lib/pkgconfig/glproto.pc
++ f $USER0:$GROUP0 444 $OBJDIR/xorgproto/inputproto.pc $TARGETPKGDIR/lib/pkgconfig/inputproto.pc
++ f $USER0:$GROUP0 444 $OBJDIR/xorgproto/kbproto.pc $TARGETPKGDIR/lib/pkgconfig/kbproto.pc
++ f $USER0:$GROUP0 444 $OBJDIR/xorgproto/presentproto.pc $TARGETPKGDIR/lib/pkgconfig/presentproto.pc
++ f $USER0:$GROUP0 444 $OBJDIR/xorgproto/randrproto.pc $TARGETPKGDIR/lib/pkgconfig/randrproto.pc
++ f $USER0:$GROUP0 444 $OBJDIR/xorgproto/recordproto.pc $TARGETPKGDIR/lib/pkgconfig/recordproto.pc
++ f $USER0:$GROUP0 444 $OBJDIR/xorgproto/renderproto.pc $TARGETPKGDIR/lib/pkgconfig/renderproto.pc
++ f $USER0:$GROUP0 444 $OBJDIR/xorgproto/resourceproto.pc $TARGETPKGDIR/lib/pkgconfig/resourceproto.pc
++ f $USER0:$GROUP0 444 $OBJDIR/xorgproto/scrnsaverproto.pc $TARGETPKGDIR/lib/pkgconfig/scrnsaverproto.pc
++ f $USER0:$GROUP0 444 $OBJDIR/xorgproto/videoproto.pc $TARGETPKGDIR/lib/pkgconfig/videoproto.pc
++ f $USER0:$GROUP0 444 $OBJDIR/xorgproto/xcmiscproto.pc $TARGETPKGDIR/lib/pkgconfig/xcmiscproto.pc
++ f $USER0:$GROUP0 444 $OBJDIR/xorgproto/xextproto.pc $TARGETPKGDIR/lib/pkgconfig/xextproto.pc
++ f $USER0:$GROUP0 444 $OBJDIR/xorgproto/xf86bigfontproto.pc $TARGETPKGDIR/lib/pkgconfig/xf86bigfontproto.pc
++ f $USER0:$GROUP0 444 $OBJDIR/xorgproto/xf86dgaproto.pc $TARGETPKGDIR/lib/pkgconfig/xf86dgaproto.pc
++ f $USER0:$GROUP0 444 $OBJDIR/xorgproto/xf86driproto.pc $TARGETPKGDIR/lib/pkgconfig/xf86driproto.pc
++ f $USER0:$GROUP0 444 $OBJDIR/xorgproto/xf86vidmodeproto.pc $TARGETPKGDIR/lib/pkgconfig/xf86vidmodeproto.pc
++ f $USER0:$GROUP0 444 $OBJDIR/xorgproto/xineramaproto.pc $TARGETPKGDIR/lib/pkgconfig/xineramaproto.pc
++ f $USER0:$GROUP0 444 $OBJDIR/xorgproto/xproto.pc $TARGETPKGDIR/lib/pkgconfig/xproto.pc
++ f $USER0:$GROUP0 444 $OBJDIR/xorgproto/xwaylandproto.pc $TARGETPKGDIR/lib/pkgconfig/xwaylandproto.pc
