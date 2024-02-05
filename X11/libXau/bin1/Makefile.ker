@@ -1,0 +1,7 @@
+PROG = autest
+
+CFILES = $(X11SRCDIR)/libXau/Autest.c
+
+LIBES = $(XAULIB)
+
+all: $(PROG)

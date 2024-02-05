@@ -1,0 +1,25 @@
+#                            X11 map
+#                            libXau
+#            X authorization file management library
+#
+#
+# GENERATED
+@ d * * $PROJECTDIR/X11/libXau/ *
+@ d * * $PROJECTDIR/X11/libXau/lib1 *
+@ d * * $PROJECTDIR/X11/libXau/bin1 *
+@ d * * $PROJECTDIR/X11/libXau/man *
+
+# INSTALLED
++ f $USER0:$GROUP0 444 $OBJDIR/X11/libXau/xau.pc $TARGETPKGDIR/lib/pkgconfig/xau.pc
++ f $USER0:$GROUP0 555 $RKLIBDIR/$XAULIB $X11DIR/lib/$XAULIB Tlibexpl $REQUESTED_TYPES
++ f $USER0:$GROUP0 755 $OBJDIR/X11/libXau/bin1/autest $X11DIR/bin/autest
++ f $USER0:$GROUP0 444 $PROJECTDIR/X11/libXau/include/X11/Xauth.h $X11DIR/include/X11/Xauth.h
++ f $USER0:$GROUP0 444 $OBJDIR/X11/libXau/man/Xau.man $X11DIR/3/Xau.man Tman
++ f $USER0:$GROUP0 444 $OBJDIR/X11/libXau/man/XauDisposeAuth.man $X11DIR/3/XauDisposeAuth.man Tman
++ f $USER0:$GROUP0 444 $OBJDIR/X11/libXau/man/XauFileName.man $X11DIR/3/XauFileName.man Tman
++ f $USER0:$GROUP0 444 $OBJDIR/X11/libXau/man/XauGetAuthByAddr.man $X11DIR/3/XauGetAuthByAddr.man Tman
++ f $USER0:$GROUP0 444 $OBJDIR/X11/libXau/man/XauGetBestAuthByAddr.man $X11DIR/3/XauGetBestAuthByAddr.man Tman
++ f $USER0:$GROUP0 444 $OBJDIR/X11/libXau/man/XauLockAuth.man $X11DIR/3/XauLockAuth.man Tman
++ f $USER0:$GROUP0 444 $OBJDIR/X11/libXau/man/XauReadAuth.man $X11DIR/3/XauReadAuth.man Tman
++ f $USER0:$GROUP0 444 $OBJDIR/X11/libXau/man/XauUnlockAuth.man $X11DIR/3/XauUnlockAuth.man Tman
++ f $USER0:$GROUP0 444 $OBJDIR/X11/libXau/man/XauWriteAuth.man $X11DIR/3/XauWriteAuth.man Tman

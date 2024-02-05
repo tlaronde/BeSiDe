@@ -1,0 +1,13 @@
+LIB = $(XAULIB)
+
+CFILES = \
+	$(X11SRCDIR)/libXau/AuDispose.c \
+	$(X11SRCDIR)/libXau/AuFileName.c \
+	$(X11SRCDIR)/libXau/AuGetAddr.c \
+	$(X11SRCDIR)/libXau/AuGetBest.c \
+	$(X11SRCDIR)/libXau/AuLock.c \
+	$(X11SRCDIR)/libXau/AuRead.c \
+	$(X11SRCDIR)/libXau/AuUnlock.c \
+	$(X11SRCDIR)/libXau/AuWrite.c
+
+all: $(LIB)

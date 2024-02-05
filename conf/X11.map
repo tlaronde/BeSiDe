@@ -4,6 +4,7 @@
 # Hierarchy.
 #
 + d $USER0:$GROUP0 755 * $X11DIR/
++ d $USER0:$GROUP0 755 * $X11DIR/bin/
 + d $USER0:$GROUP0 755 * $X11DIR/include/
 + d $USER0:$GROUP0 755 * $X11DIR/include/GL/
 + d $USER0:$GROUP0 755 * $X11DIR/include/GL/internal/
@@ -11,6 +12,7 @@
 + d $USER0:$GROUP0 755 * $X11DIR/include/X11/dri/
 + d $USER0:$GROUP0 755 * $X11DIR/include/X11/extensions/
 + d $USER0:$GROUP0 755 * $X11DIR/include/X11/fonts/
++ d $USER0:$GROUP0 755 * $X11DIR/lib/
 + d $USER0:$GROUP0 755 * $X11DIR/share/
 + d $USER0:$GROUP0 755 * $X11DIR/share/doc/
 + d $USER0:$GROUP0 755 * $X11DIR/share/doc/xorgproto/

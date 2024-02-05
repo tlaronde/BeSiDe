@@ -81,6 +81,17 @@ elif rk_struct_has_member SYS sys/select.h fd_set __fds_bits; then
 	USE_FDS_BITS=__fds_bits
 fi
 
+if rk_has_function SYS string.h explicit_memset "void *" "void *, int, size_t" ; then
+	CPPFLAGS="$CPPFLAGS -DHAVE_EXPLICIT_MEMSET"
+
+elif rk_has_function SYS string.h explicit_bzero "void *" "void *, size_t" ; then
+	CPPFLAGS="$CPPFLAGS -DHAVE_EXPLICIT_BZERO"
+fi
+
+if rk_has_function SYS unistd.h pathconf "long" "const char *, int" ; then
+	CPPFLAGS="$CPPFLAGS -DHAVE_PATHCONF"
+fi
+
 # X11 all depend on the fundamental proto. Generated headers are
 # placed in $OBJDIR/include/X11.
 #
@@ -95,3 +106,8 @@ CPPFLAGS="$CPPFLAGS -I$X11SRCDIR/xorgproto/include -I$OBJDIR/include/X11"
 #
 REQUIRED="USE_FDS_BITS"
 
+#========== LIBES
+
+	_version=$($(TOOLDIR)/sys/posix/sh1/rkmeson $(X11SRCDIR)/libXau/meson.build \
+		| sed -n "s!^RK_MESON_version='\\(*\\)'\$!\\\\1!p")
+XAULIB=$(rk_add_lib libXau__$(_version) $X11SRCDIR/libXau/include/X11 Xauth.h $REQUESTED_TYPES)
