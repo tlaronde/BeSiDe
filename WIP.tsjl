@@ -1,11 +1,16 @@
                 WORK IN PROGRESS (NOT PUBLISHED)
-                           2023-12-29
+                           2024-01-06
 
 - X11 userspace: adding infrastructure to compile whatever is current,
 with R.I.S.K. (my own compile infrastructure) so that I can track down
 bugs in Mesa (once done, RISK will be published also as a git
 source---it is for now published in a tarball for compilation of
-kerTeX);
+kerTeX). The work has started (see RISK conf/; the subdir X11/ with
+RISK stuff reaching other unchanged git sources that have to be placed
+in ../X11 relative to the present sources (i.e. outside). Working for
+the integration, I also propose patches to Xorg for fixing things that
+do not compile out of the box on NetBSD (first patches accepted
+upstream and merged in current);
 
 - drm / drmkms: verify if the legacy user space drivers (for i915)
 can still be used and chase also the bug about artefacts linked
