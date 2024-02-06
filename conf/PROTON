@@ -108,6 +108,6 @@ REQUIRED="USE_FDS_BITS"
 
 #========== LIBES
 
-	_version=$($(TOOLDIR)/sys/posix/sh1/rkmeson $(X11SRCDIR)/libXau/meson.build \
-		| sed -n "s!^RK_MESON_version='\\(*\\)'\$!\\\\1!p")
-XAULIB=$(rk_add_lib libXau__$(_version) $X11SRCDIR/libXau/include/X11 Xauth.h $REQUESTED_TYPES)
+	_version=$($TOOLDIR/sys/posix/sh1/rkmeson $X11SRCDIR/libXau/meson.build \
+		| sed -n "s!^RK_MESON_version='\\(.*\\)'\$!\\1!p")
+XAULIB=$(rk_add_lib libXau__$_version $X11SRCDIR/libXau/include/X11 Xauth.h $REQUESTED_TYPES)
