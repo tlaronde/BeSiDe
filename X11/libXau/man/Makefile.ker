@@ -15,12 +15,13 @@ all: $(DATA)
 
 $(DATA): $(MAN_FILES) version.data
 	for file in $(MAN_FILES); do \
-		sed -e 's!__xorgversion__!"libXau '"$$(cat version.data)"'" "X Version 11"!" \
+		sed -e 's!__xorgversion__!"libXau '"$$(cat version.data)"'" "X Version 11"!' \
 			-e 's!__libmansuffix__!3!' \
+			$$file\
 			>$$(basename "$$file"); \
 	done
 
 version.data: $(X11SRCDIR)/libXau/meson.build
 	$(TOOLDIR)/sys/posix/sh1/rkmeson $(X11SRCDIR)/libXau/meson.build \
-		| sed -n "s!^RK_MESON_version='\\(*\\)'\$!\\\\1!p" \
+		| sed -n "s!^RK_MESON_version='\\(.*\\)'\$$!\\1!p" \
 		>$@

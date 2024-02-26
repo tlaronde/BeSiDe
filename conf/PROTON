@@ -64,13 +64,15 @@ X11DIR="${TARGETPKGDIR}/X11R7"
 #
 	MAPS="$MAPS $PROJECTDIR/conf/X11.map"
 	i=0
-while test $i -le 1; do
+while test $i -le 2; do
 	MAPS="$MAPS $PROJECTDIR/conf/X11_$(printf "%03d" $i).map"
 	i=$(($i + 1))
 done
 
 #========== COMPILATION AND LIBRARIES
 #
+RK_TARGET_2D_TYPE_INCLUDE=NO
+
 # X11 requirements.
 #
 
@@ -95,7 +97,7 @@ fi
 # X11 all depend on the fundamental proto. Generated headers are
 # placed in $OBJDIR/include/X11.
 #
-CPPFLAGS="$CPPFLAGS -I$X11SRCDIR/xorgproto/include -I$OBJDIR/include/X11"
+CPPFLAGS="$CPPFLAGS -I$X11SRCDIR/xorgproto/include"
 
 #========== SANITY CHECKS
 # Verify that we have the mandatory libes
@@ -110,4 +112,4 @@ REQUIRED="USE_FDS_BITS"
 
 	_version=$($TOOLDIR/sys/posix/sh1/rkmeson $X11SRCDIR/libXau/meson.build \
 		| sed -n "s!^RK_MESON_version='\\(.*\\)'\$!\\1!p")
-XAULIB=$(rk_add_lib libXau__$_version $X11SRCDIR/libXau/include/X11 Xauth.h $REQUESTED_TYPES)
+XAULIB=$(rk_add_lib libXau__$_version $X11SRCDIR/libXau/include Xauth.h $REQUESTED_TYPES)
