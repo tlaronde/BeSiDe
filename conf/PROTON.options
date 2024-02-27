@@ -15,3 +15,11 @@ X11SRCDIR [../X11]
 	Where the X11 git sources are. If relative, relative to
 	PROJECTDIR.
 
+PYTHONVER [python3]
+	The versioned name of the python executable on TARGET. If not
+	set, the name is set to "python3" that will very probably not
+	be what is desirable. Python is not used as a tool, but some
+	data is for it and shall be placed in a directory it searches.
+
+PYTHONDIR [$TARGETPKGDIR/lib/$PYTHONVER/site-packages]
+	Directory on TARGET where python package will be installed.
