@@ -1,0 +1,21 @@
+DATA = pkgconf_files
+
+PKGCONF_FILES = \
+	$(X11SRCDIR)/xcbproto/xcb-proto.pc.in
+
+all: $(DATA)
+
+$(DATA): version.data $(PKGCONF_FILES)
+	for file in $(PKGCONF_FILES); do \
+		sed -e "s!@PACKAGE_VERSION@!$$(cat version.data)!" \
+			-e 's!@prefix@!$(X11DIR)!' \
+			-e 's!@exec_prefix@!$${prefix}/bin!' \
+			-e 's!@libdir@!$${prefix}/lib!' \
+			-e 's!@includedir@!$${prefix}/include!' "$$file"\
+			>$$(basename "$$file" | sed 's/\.in$$//'); \
+	done
+
+version.data: $(X11SRCDIR)/xcbproto/meson.build
+	$(TOOLDIR)/sys/posix/sh1/rkmeson $(X11SRCDIR)/xcbproto/meson.build \
+		| sed -n "s!^RK_MESON_version='\\(.*\\)'\$$!\\1!p" \
+		>$@

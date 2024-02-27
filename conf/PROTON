@@ -40,6 +40,13 @@ X11SRCDIR=${X11SRCDIR:-../X11}
 
 X11DIR="${TARGETPKGDIR}/X11R7"
 
+# Export PYTHONVER
+PYTHONVER="$PYTHONVER"
+test "$PYTHONVER" || PYTHONVER=python3
+
+PYTHONDIR="$PYTHONDIR"
+test "$PYTHONDIR" || PYTHONDIR="$TARGETPKGDIR/$PYTHONVER/site-packages"
+
 #========== MAP HANDLING
 #
 # We need to instruct rkconfig(1) to replace some project added
@@ -64,7 +71,7 @@ X11DIR="${TARGETPKGDIR}/X11R7"
 #
 	MAPS="$MAPS $PROJECTDIR/conf/X11.map"
 	i=0
-while test $i -le 2; do
+while test $i -le 3; do
 	MAPS="$MAPS $PROJECTDIR/conf/X11_$(printf "%03d" $i).map"
 	i=$(($i + 1))
 done
