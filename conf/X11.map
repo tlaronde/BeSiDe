@@ -20,4 +20,8 @@
 + d $USER0:$GROUP0 755 * $X11DIR/share/sgml/
 + d $USER0:$GROUP0 755 * $X11DIR/share/sgml/X11/
 + d $USER0:$GROUP0 755 * $X11DIR/share/sgml/X11/dbs
+# xcb
++ d $USER0:$GROUP0 755 * $X11DIR/share/xcb/
++ d $USER0:$GROUP0 755 * $PYTHONDIR/
++ d $USER0:$GROUP0 755 * $PYTHONDIR/xcbgen/
 

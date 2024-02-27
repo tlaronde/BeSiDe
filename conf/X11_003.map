@@ -1,0 +1,51 @@
+#                            X11 map
+#                       xcbproto / libxcb
+#        X Window System protocol alternative interface
+#
+# xcbproto depends, at least, on xmllint or Python.
+#
+# GENERATED
+@ d * * $PROJECTDIR/X11/xcbproto/ *
+
+
+# INSTALLED
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/xcbgen/__init__.py $PYTHONDIR/xcbgen/__init__.py
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/xcbgen/align.py $PYTHONDIR/xcbgen/align.py
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/xcbgen/error.py $PYTHONDIR/xcbgen/error.py
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/xcbgen/expr.py $PYTHONDIR/xcbgen/expr.py
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/xcbgen/matcher.py $PYTHONDIR/xcbgen/matcher.py
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/xcbgen/state.py $PYTHONDIR/xcbgen/state.py
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/xcbgen/xtypes.py $PYTHONDIR/xcbgen/xtypes.py
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/bigreq.xml $X11DIR/share/xcb/bigreq.xml
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/composite.xml $X11DIR/share/xcb/composite.xml
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/damage.xml $X11DIR/share/xcb/damage.xml
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/dbe.xml $X11DIR/share/xcb/dbe.xml
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/dpms.xml $X11DIR/share/xcb/dpms.xml
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/dri2.xml $X11DIR/share/xcb/dri2.xml
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/dri3.xml $X11DIR/share/xcb/dri3.xml
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/ge.xml $X11DIR/share/xcb/ge.xml
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/glx.xml $X11DIR/share/xcb/glx.xml
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/present.xml $X11DIR/share/xcb/present.xml
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/randr.xml $X11DIR/share/xcb/randr.xml
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/record.xml $X11DIR/share/xcb/record.xml
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/render.xml $X11DIR/share/xcb/render.xml
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/res.xml $X11DIR/share/xcb/res.xml
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/screensaver.xml $X11DIR/share/xcb/screensaver.xml
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/shape.xml $X11DIR/share/xcb/shape.xml
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/shm.xml $X11DIR/share/xcb/shm.xml
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/sync.xml $X11DIR/share/xcb/sync.xml
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/xc_misc.xml $X11DIR/share/xcb/xc_misc.xml
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/xcb.xsd $X11DIR/share/xcb/xcb.xsd
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/xevie.xml $X11DIR/share/xcb/xevie.xml
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/xf86dri.xml $X11DIR/share/xcb/xf86dri.xml
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/xf86vidmode.xml $X11DIR/share/xcb/xf86vidmode.xml
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/xfixes.xml $X11DIR/share/xcb/xfixes.xml
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/xinerama.xml $X11DIR/share/xcb/xinerama.xml
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/xinput.xml $X11DIR/share/xcb/xinput.xml
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/xkb.xml $X11DIR/share/xcb/xkb.xml
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/xprint.xml $X11DIR/share/xcb/xprint.xml
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/xproto.xml $X11DIR/share/xcb/xproto.xml
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/xselinux.xml $X11DIR/share/xcb/xselinux.xml
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/xtest.xml $X11DIR/share/xcb/xtest.xml
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/xv.xml $X11DIR/share/xcb/xv.xml
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/xvmc.xml $X11DIR/share/xcb/xvmc.xml
