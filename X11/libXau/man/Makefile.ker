@@ -22,6 +22,6 @@ $(DATA): $(MAN_FILES) version.data
 	done
 
 version.data: $(X11SRCDIR)/libXau/meson.build
-	$(TOOLDIR)/sys/posix/sh1/rkmeson $(X11SRCDIR)/libXau/meson.build \
+	$(TOOLDIR)/sys/posix/sh1/aux/rkmeson $(X11SRCDIR)/libXau/meson.build \
 		| sed -n "s!^RK_MESON_version='\\(.*\\)'\$$!\\1!p" \
 		>$@
