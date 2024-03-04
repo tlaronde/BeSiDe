@@ -2,7 +2,10 @@
 #                       xcbproto / libxcb
 #        X Window System protocol alternative interface
 #
-# xcbproto depends, at least, on xmllint or Python.
+# xcbproto:
+#	- depends on xmllint if checking is asked for (to be added);
+#	- can depend on install time on python to byte-compile (to be
+#	added?).
 #
 # GENERATED
 @ d * * $PROJECTDIR/X11/xcbproto/ *

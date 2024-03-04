@@ -22,4 +22,5 @@ PYTHONVER [python3]
 	data is for it and shall be placed in a directory it searches.
 
 PYTHONDIR [$TARGETPKGDIR/lib/$PYTHONVER/site-packages]
-	Directory on TARGET where python package will be installed.
+	Directory on TARGET where python package will be installed
+	(not byte-compiled).
