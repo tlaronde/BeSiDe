@@ -1,4 +1,20 @@
             Here are the PROTON user definable options
+                     (in alphabetical order)
+
+CHECK_XML []
+	Whether to check xml and xsl (with xmllint)
+	using xmllint) or not. If empty (default), checks are not
+	made. Every non empty definition is considered as: true.
+
+PYTHONDIR [$TARGETPKGDIR/lib/$PYTHONVER/site-packages]
+	Directory on TARGET where python package will be installed
+	(not byte-compiled).
+
+PYTHONVER [python3]
+	The versioned name of the python executable on TARGET. If not
+	set, the name is set to "python3" that will very probably not
+	be what is desirable. Python is not used as a tool, but some
+	data is for it and shall be placed in a directory it searches.
 
 TARGETPKGDIR [/usr/local]
 	Where the package installation will be rooted. It is not
@@ -15,12 +31,6 @@ X11SRCDIR [../X11]
 	Where the X11 git sources are. If relative, relative to
 	PROJECTDIR.
 
-PYTHONVER [python3]
-	The versioned name of the python executable on TARGET. If not
-	set, the name is set to "python3" that will very probably not
-	be what is desirable. Python is not used as a tool, but some
-	data is for it and shall be placed in a directory it searches.
-
-PYTHONDIR [$TARGETPKGDIR/lib/$PYTHONVER/site-packages]
-	Directory on TARGET where python package will be installed
-	(not byte-compiled).
+XMLLINT	[xmllint in path]
+	On MATRIX, if CHECK_XML is set, program to use to check xml
+	against xsl validity.

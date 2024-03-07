@@ -1,0 +1,41 @@
+DATA = xml_check
+
+XML_DATA = \
+	$(X11SRCDIR)/xcbproto/src/xcb.xsd \
+	$(X11SRCDIR)/xcbproto/src/xproto.xml \
+	$(X11SRCDIR)/xcbproto/src/bigreq.xml \
+	$(X11SRCDIR)/xcbproto/src/composite.xml \
+	$(X11SRCDIR)/xcbproto/src/damage.xml \
+	$(X11SRCDIR)/xcbproto/src/dbe.xml \
+	$(X11SRCDIR)/xcbproto/src/dpms.xml \
+	$(X11SRCDIR)/xcbproto/src/dri2.xml \
+	$(X11SRCDIR)/xcbproto/src/dri3.xml \
+	$(X11SRCDIR)/xcbproto/src/ge.xml \
+	$(X11SRCDIR)/xcbproto/src/glx.xml \
+	$(X11SRCDIR)/xcbproto/src/present.xml \
+	$(X11SRCDIR)/xcbproto/src/randr.xml \
+	$(X11SRCDIR)/xcbproto/src/record.xml \
+	$(X11SRCDIR)/xcbproto/src/render.xml \
+	$(X11SRCDIR)/xcbproto/src/res.xml \
+	$(X11SRCDIR)/xcbproto/src/screensaver.xml \
+	$(X11SRCDIR)/xcbproto/src/shape.xml \
+	$(X11SRCDIR)/xcbproto/src/shm.xml \
+	$(X11SRCDIR)/xcbproto/src/sync.xml \
+	$(X11SRCDIR)/xcbproto/src/xc_misc.xml \
+	$(X11SRCDIR)/xcbproto/src/xevie.xml \
+	$(X11SRCDIR)/xcbproto/src/xf86dri.xml \
+	$(X11SRCDIR)/xcbproto/src/xfixes.xml \
+	$(X11SRCDIR)/xcbproto/src/xf86vidmode.xml \
+	$(X11SRCDIR)/xcbproto/src/xinerama.xml \
+	$(X11SRCDIR)/xcbproto/src/xinput.xml \
+	$(X11SRCDIR)/xcbproto/src/xkb.xml \
+	$(X11SRCDIR)/xcbproto/src/xprint.xml \
+	$(X11SRCDIR)/xcbproto/src/xselinux.xml \
+	$(X11SRCDIR)/xcbproto/src/xtest.xml \
+	$(X11SRCDIR)/xcbproto/src/xv.xml \
+	$(X11SRCDIR)/xcbproto/src/xvmc.xml
+
+all: xml_check
+
+xml_check: $(XML_DATA)
+	$(XMLLINT) --noout --schema $(XML_DATA)
