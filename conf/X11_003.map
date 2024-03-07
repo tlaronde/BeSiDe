@@ -9,6 +9,7 @@
 #
 # GENERATED
 @ d * * $PROJECTDIR/X11/xcbproto/ *
+$CHECK_XML?@ d * * $PROJECTDIR/X11/xcbproto/src/ *
 
 
 # INSTALLED

@@ -26,6 +26,13 @@ RK_API_VERSION=1.20
 
 #========== SETTING THE VARIABLES
 
+CHECK_XML=${CHECK_XML:-}	# empty (default) means NO or FALSE
+
+if test "$CHECK_XML"; then
+XMLLINT=${XMLLINT:-$(rk_which_cmd_of xmllint)}	# exported
+	test "$XMLLINT" || CHECK_XML=
+fi
+
 TARGETPKGDIR=${TARGETPKGDIR:-/usr/local}
 
 # We do not use ": ${VARIABLE:="value"} because '^VARIABLE=' instructs
@@ -40,12 +47,9 @@ X11SRCDIR=${X11SRCDIR:-../X11}
 
 X11DIR="${TARGETPKGDIR}/X11R7"
 
-# Export PYTHONVER
-PYTHONVER="$PYTHONVER"
-test "$PYTHONVER" || PYTHONVER=python3
-
-PYTHONDIR="$PYTHONDIR"
-test "$PYTHONDIR" || PYTHONDIR="$TARGETPKGDIR/$PYTHONVER/site-packages"
+# Export PYTHONVER and PYTHONDIR
+PYTHONVER="${PYTHONVER:-python3}"
+PYTHONDIR="${PYTHONDIR:-$TARGETPKGDIR/$PYTHONVER/site-packages}"
 
 #========== MAP HANDLING
 #
