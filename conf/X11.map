@@ -3,6 +3,8 @@
 
 # Hierarchy.
 #
++ d $USER0:$GROUP0 755 * $TARGETPKGDIR/lib/$PYTHONVER
++ d $USER0:$GROUP0 755 * $TARGETPKGDIR/lib/$PYTHONVER/$PYTHONMODDIR
 + d $USER0:$GROUP0 755 * $X11DIR/
 + d $USER0:$GROUP0 755 * $X11DIR/bin/
 + d $USER0:$GROUP0 755 * $X11DIR/include/
@@ -13,6 +15,8 @@
 + d $USER0:$GROUP0 755 * $X11DIR/include/X11/extensions/
 + d $USER0:$GROUP0 755 * $X11DIR/include/X11/fonts/
 + d $USER0:$GROUP0 755 * $X11DIR/lib/
++ d $USER0:$GROUP0 755 * $X11DIR/0 Tmandir
++ d $USER0:$GROUP0 755 * $X11DIR/3 Tmandir
 + d $USER0:$GROUP0 755 * $X11DIR/share/
 + d $USER0:$GROUP0 755 * $X11DIR/share/doc/
 + d $USER0:$GROUP0 755 * $X11DIR/share/doc/xorgproto/
@@ -22,6 +26,4 @@
 + d $USER0:$GROUP0 755 * $X11DIR/share/sgml/X11/dbs
 # xcb
 + d $USER0:$GROUP0 755 * $X11DIR/share/xcb/
-+ d $USER0:$GROUP0 755 * $PYTHONDIR/
-+ d $USER0:$GROUP0 755 * $PYTHONDIR/xcbgen/
 

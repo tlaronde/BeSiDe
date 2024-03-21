@@ -12,6 +12,24 @@
 # !!!THIS SOFTWARE IS PROVIDED ``AS IS'' WITHOUT ANY WARRANTIES!!! 
 #                      USE IT AT YOUR OWN RISK 
 
+# include admin commands rkcomp wrappers (that includes libsh as well)
+#
+. install_bin/cmds
+
+# include python commands
+. install_bin/python.cmds
+
+# include rkinstall config.
+. install_data/rkinstall.cf
+
+# Setting program var for log() leading string.
+#
+program=post-install
+
+log "Byte-compiling python modules"
+cd $TARGETPKGDIR/lib/$PYTHONVER/$PYTHONMODDIR/xcbgen
+Tpython '>=2.5' # called in the module dir; for all version >= 2.5
+
 cat - <<EOT >&2
 
 ==================================================================

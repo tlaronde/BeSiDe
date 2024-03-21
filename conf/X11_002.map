@@ -13,7 +13,7 @@
 + f $USER0:$GROUP0 444 $OBJDIR/X11/libXau/xau.pc $TARGETPKGDIR/lib/pkgconfig/xau.pc
 + f $USER0:$GROUP0 555 $RKLIBDIR/$XAULIB $X11DIR/lib/$XAULIB Tlibexpl $REQUESTED_TYPES
 + f $USER0:$GROUP0 755 $OBJDIR/X11/libXau/bin1/autest $X11DIR/bin/autest
-+ f $USER0:$GROUP0 444 $PROJECTDIR/X11/libXau/include/X11/Xauth.h $X11DIR/include/X11/Xauth.h
++ f $USER0:$GROUP0 444 $X11SRCDIR/libXau/include/X11/Xauth.h $X11DIR/include/X11/Xauth.h
 + f $USER0:$GROUP0 444 $OBJDIR/X11/libXau/man/Xau.man $X11DIR/3/Xau.man Tman
 + f $USER0:$GROUP0 444 $OBJDIR/X11/libXau/man/XauDisposeAuth.man $X11DIR/3/XauDisposeAuth.man Tman
 + f $USER0:$GROUP0 444 $OBJDIR/X11/libXau/man/XauFileName.man $X11DIR/3/XauFileName.man Tman

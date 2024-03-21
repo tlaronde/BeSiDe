@@ -13,13 +13,14 @@ $CHECK_XML?@ d * * $PROJECTDIR/X11/xcbproto/src/ *
 
 
 # INSTALLED
-+ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/xcbgen/__init__.py $PYTHONDIR/xcbgen/__init__.py
-+ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/xcbgen/align.py $PYTHONDIR/xcbgen/align.py
-+ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/xcbgen/error.py $PYTHONDIR/xcbgen/error.py
-+ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/xcbgen/expr.py $PYTHONDIR/xcbgen/expr.py
-+ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/xcbgen/matcher.py $PYTHONDIR/xcbgen/matcher.py
-+ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/xcbgen/state.py $PYTHONDIR/xcbgen/state.py
-+ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/xcbgen/xtypes.py $PYTHONDIR/xcbgen/xtypes.py
++ d $USER0:$GROUP0 755 * $TARGETPKGDIR/lib/$PYTHONVER/$PYTHONMODDIR/xcbgen
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/xcbgen/__init__.py $TARGETPKGDIR/lib/$PYTHONVER/$PYTHONMODDIR/xcbgen/__init__.py
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/xcbgen/align.py $TARGETPKGDIR/lib/$PYTHONVER/$PYTHONMODDIR/xcbgen/align.py
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/xcbgen/error.py $TARGETPKGDIR/lib/$PYTHONVER/$PYTHONMODDIR/xcbgen/error.py
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/xcbgen/expr.py $TARGETPKGDIR/lib/$PYTHONVER/$PYTHONMODDIR/xcbgen/expr.py
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/xcbgen/matcher.py $TARGETPKGDIR/lib/$PYTHONVER/$PYTHONMODDIR/xcbgen/matcher.py
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/xcbgen/state.py $TARGETPKGDIR/lib/$PYTHONVER/$PYTHONMODDIR/xcbgen/state.py
++ f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/xcbgen/xtypes.py $TARGETPKGDIR/lib/$PYTHONVER/$PYTHONMODDIR/xcbgen/xtypes.py
 + f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/bigreq.xml $X11DIR/share/xcb/bigreq.xml
 + f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/composite.xml $X11DIR/share/xcb/composite.xml
 + f $USER0:$GROUP0 444 $X11SRCDIR/xcbproto/src/damage.xml $X11DIR/share/xcb/damage.xml
