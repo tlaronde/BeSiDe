@@ -6,15 +6,16 @@ CHECK_XML []
 	using xmllint) or not. If empty (default), checks are not
 	made. Every non empty definition is considered as: true.
 
-PYTHONDIR [$TARGETPKGDIR/lib/$PYTHONVER/site-packages]
-	Directory on TARGET where python package will be installed
-	(not byte-compiled).
+PYTHONMODDIR [site-packages]
+	The subdirectory under $PYTHONVER where modules will be
+	installed.
 
-PYTHONVER [python3]
-	The versioned name of the python executable on TARGET. If not
-	set, the name is set to "python3" that will very probably not
-	be what is desirable. Python is not used as a tool, but some
-	data is for it and shall be placed in a directory it searches.
+PYTHONVER [python]
+	Sub-directory underwhich the packages will be installed. By
+	default, we conform to pep-3147, and install common sources
+	under 'python/$PYTHONMODDIR', letting, at install time on
+	TARGET, whatever versions of python byte-compile the sources
+	under a common __pycache__ subdir.
 
 TARGETPKGDIR [/usr/local]
 	Where the package installation will be rooted. It is not

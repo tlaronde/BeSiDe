@@ -47,9 +47,12 @@ X11SRCDIR=${X11SRCDIR:-../X11}
 
 X11DIR="${TARGETPKGDIR}/X11R7"
 
-# Export PYTHONVER and PYTHONDIR
-PYTHONVER="${PYTHONVER:-python3}"
-PYTHONDIR="${PYTHONDIR:-$TARGETPKGDIR/$PYTHONVER/site-packages}"
+# Export PYTHONMODDIR and PYTHONVER. We conform by default to pep-3147.
+# The python versions will be found eventually on TARGET, at install
+# time.
+#
+PYTHONMODDIR="${PYTHONMODDIR:-site-packages}"
+PYTHONVER="${PYTHONVER:-python}"
 
 #========== MAP HANDLING
 #
@@ -109,6 +112,18 @@ fi
 # placed in $OBJDIR/include/X11.
 #
 CPPFLAGS="$CPPFLAGS -I$X11SRCDIR/xorgproto/include"
+
+#========== INSTALLATION REQUIREMENTS
+#
+# Python byte-compiling requires at least one python interpreter; but
+# the byte-compile version is not portable, and the python interpreter
+# is required, on TARGET, to run python code... So this has to be done
+# on the TARGET, at install time, without requiring some
+# cross-compiled python version (does this exist?) that would produce
+# binary compatible files on the MATRIX.
+#
+RKINSTALL_AUX_CMDS=python
+RKINSTALL_CONF_ADD="PYTHONVER PYTHONMODDIR"
 
 #========== SANITY CHECKS
 # Verify that we have the mandatory libes
