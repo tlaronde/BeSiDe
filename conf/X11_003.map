@@ -4,8 +4,10 @@
 #
 # xcbproto:
 #	- depends on xmllint if checking is asked for (to be added);
-#	- can depend on install time on python to byte-compile (to be
-#	added?).
+#	- can depend on install time on python to byte-compile (for 
+#		now has to be added eventually since the C prototypes
+#		are produced from the xml files with the python code
+#		in srcgen/).
 #
 # GENERATED
 @ d * * $PROJECTDIR/X11/xcbproto/ *
