@@ -199,7 +199,7 @@ static struct cfg_error {
  * config as well as the flags indicating, when dot'ing files, if the
  * defhost and defipsec must be restored after quitting a dot'ed file.
  */
-static char	flags;	/* grestoring */
+static int	flags;	/* grestoring */
 #define CFG_GRESTORE_DEFHOST_FLAG	0x01
 static const char	* const defhost_default = "*";	/* de dicto */
 static char		*defhost; /* current defhost; NULL is default */
