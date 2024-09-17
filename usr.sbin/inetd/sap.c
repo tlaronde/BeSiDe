@@ -735,11 +735,7 @@ s2i(int type, void *val, ...)
 
 			sap_state = SAP_ENONSENSE;
 			va_start(ap, val);
-			if (ap == NULL)
-				return -1;
 			lo = va_arg(ap, uintmax_t);
-			if (ap == NULL)
-				return -1;
 			hi = va_arg(ap, uintmax_t);
 			sap_state = SAP_ESTORE;
 			va_end(ap);
@@ -789,12 +785,7 @@ s2i(int type, void *val, ...)
 
 			sap_state = SAP_ENONSENSE;
 			va_start(ap, val);
-			if (ap == NULL)
-				return -1;
 			lo = va_arg(ap, intmax_t);
-			if (ap == NULL)
-				return -1;
-
 			hi = va_arg(ap, intmax_t);
 
 			va_end(ap);
