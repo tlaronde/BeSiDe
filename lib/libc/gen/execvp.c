@@ -47,6 +47,7 @@ __RCSID("$NetBSD: execvp.c,v 1.32 2024/01/20 14:52:47 christos Exp $");
 #include <limits.h>
 #include <unistd.h>
 #include <paths.h>
+#include <pathsearch.h>
 #include "reentrant.h"
 #include "extern.h"
 
@@ -62,9 +63,11 @@ execvpe(const char *name, char * const *argv, char * const * envp)
 	int cnt;
 	size_t lp, ln;
 	int eacces = 0;
+	int do_qfilename;
 	unsigned int etxtbsy = 0;
 	char buf[PATH_MAX];
 	const char *bp, *path, *p;
+	const char *path_search_opt;
 
 	_DIAGASSERT(name != NULL);
 
@@ -74,8 +77,16 @@ execvpe(const char *name, char * const *argv, char * const * envp)
 		goto done;
 	}
 	ln = strlen(name);
-	/* If it's an absolute or relative path name, it's easy. */
-	if (strchr(name, '/')) {
+
+	path_search_opt = getenv("PATH_SEARCH_OPT");
+	do_qfilename = PATH_SEARCH_QFILENAME_ON(path_search_opt)
+		&& PATH_SEARCH_IS_QFILENAME(name, ln);
+
+	/* 
+	 * If it's an absolute or relative path name (and not a
+	 * qualified filename and asked to search for it), it's easy.
+	 */
+	if (do_qfilename == 0 && strchr(name, '/')) {
 		bp = name;
 		path = "";
 		goto retry;

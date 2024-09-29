@@ -1,0 +1,234 @@
+.\"
+.\" Public Domain.
+.\"
+.Dd September 29, 2024
+.Dt PATHSEARCH 7
+.Os
+.Sh NAME
+.Nm pathsearch
+.Nd when and how the search of a file to execute is handled.
+.Sh DESCRIPTION
+A program to execute is given to a shell, to one of the
+.Xr exec 3
+or 
+.Xr posix_spawn 3
+family of functions in two forms: either as a
+.Em locator
+specifying exactly (even if implicitely) where the file is, or as an
+.Em identifier
+to be searched in order to be located. (POSIX generally use
+.Em path
+as a mean to imply a locator and
+.Em file
+to imply an identifier.)
+.Pp
+The shells
+.Xr sh 1 ,
+.Xr ksh 1 ,
+.Xr csh 1 ,
+as well as the variants of the
+.Xr execlp 3
+and
+.Xr execvp 3
+functions, and the
+.Xr posix_spawnp 3
+function (used by the implementation of
+.Xr system 3 )
+handle both locators and identifiers. The other variants of
+.Xr exec 3
+or
+.Xr posix_spawn 3
+expect only locators and do no path searching.
+.Pp
+For the path searching, two environment variables drive the searching:
+.Em PATH
+and
+.Em PATH_SEARCH_OPT .
+.Pp
+In order for the searching to be done, the command given as argument
+has to be identified as an identifier, and not as a locator.
+.Pp
+The traditional POSIX rule for this is simple: when path searching is
+to be attempted, if the command name given does not contain a
+.Ql \&/ ,
+it is considered an identifier and is then searched. Otherwise, it is a
+locator and no search is done.
+.Pp
+Hence, with the traditional behavior, given a command as 
+.Qq bar/foo ,
+no path searching would be done and this will be tried in the current
+working directory.
+.Pp
+The rules concerning what is an identifier can be changed using the
+.Em PATH_SEARCH_OPT
+variable. See below
+.Sx Extending identifiers to qualified filenames .
+.Pp
+When the argument is considered an identifier (according to whatever
+rule), it is not searched everywhere but only in the directories
+specified in the
+.Em PATH
+environment variable.
+.Pp
+The
+.Em PATH
+is a sequence of colon
+.Ql \&:
+separated directory pathnames to be tried, in turn, for locating the
+identified resource. Initially, it is set to
+.Pp
+.Dl /usr/bin:/bin:/usr/pkg/bin:/usr/local/bin
+by
+.Xr login 1 .
+It can be redefined later.
+.Pp
+An empty dir specification (that can be expressed in PATH by a leading
+or a trailing colon, or by two consecutive colons) means the current
+working directory. This is considered a security risk since, by the very
+nature of the current working, what will be executed depends on the
+context.  It is thus highly recommended to verify that an empty dir
+alternative has not slipped by mistake in the PATH definition.
+.Pp
+The
+.Xr sh 1
+syntax allows for example to interpolate a dir specification via a
+variable, but offers means to protect the PATH from having by mistake
+a current working dir definition because the variable is not defined
+or empty, in this way:
+.Pp
+.Dl PATH="/bin:/usr/bin:${MYSCRIPTS:+${MYSCRIPTS}:}/usr/pkg/bin"
+.Pp
+or
+.Pp
+.Dl PATH="/bin:/usr/bin${MYSCRIPTS:+:${MYSCRIPTS}}:/usr/pkg/bin"
+.Pp
+The trick here is that the variable is only expanded if it is
+defined and not empty, and, in this case only, a
+.Ql \&:
+colon is added to its definition. The result being that if the
+.Em MYSCRIPTS
+variable were not defined or empty, this will not result in two
+consecutive colons, adding by mistake the current working directory as
+an alternative dir to search in. See
+.Xr sh 1
+for an explanation of the syntax.
+.Ss Extending identifiers to qualified filenames
+The environment variable
+.Em PATH_SEARCH_OPT
+can be defined to change the path searching.
+.Pp
+The definition of the PATH_SEARCH_OPT is a string of ASCII letters
+(the options are case sensitive).
+.Pp
+At the moment, only one option is defined:
+.Bl -tag -width "Q"
+.It Q
+The rule identifying an identifier is changed to allow qualified
+filenames like
+.Qq bar/foo
+to be searched for with the PATH. A
+.Em qualified filename
+is a Resource Identifier (not a locator) consisting of a sequence
+of one or more components separated by
+.Ql / ,
+the sequence not starting or ending by a
+.Ql /
+and any component not ending by a
+.Ql \&. .
+Thus
+.Qq fs/create ,
+.Qq fs/ck ,
+.Qq fs/mount ,
+.Qq fs/ctl
+are all qualified filenames, as well as
+.Qq texlive/latex
+or
+.Qq kertex/latex ,
+as well as (G.R.A.S.S. example)
+.Qq vect/in/dxf .
+But 
+.Qq /vect/in/dxf
+is not an identifier but a locator, as well as
+.Qq ./vect/in/dxf
+or
+.Qq vect/in/dxf.
+in this latter case because of the trailing dot of the last component.
+.El
+.Sh IMPLEMENTATION NOTES
+Since the behavior can not be changed only at a shell level, there
+has to be a mean to inform both the shell and the libc to change the
+behavior. Hence the
+.Em PATH_SEARCH_OPT
+environment variable. And since it would be suboptimal to create
+another variable when something has to be optionally changed in the way
+the path is searched, the variable has to have a definition.
+.Pp
+The upper case was chosen because, initially, there was a lower case
+variant meaning: do qualified filename searching if not
+.Em POSIXLY_CORRECT .
+But if this extended behavior is not, strictly speaking, POSIX
+compliant, it is not a violation of the spirit: a qualified filename
+is an identifier, not a locator that is a path wandering instruction; a
+qualified filename can not escape the directory. In this sense, and
+without judging the relevance of the notion of a
+.Qq restricted shell ,
+as is expressed, for example, in
+.Xr ksh 1 ,
+a qualified filename is neither absolute nor relative, so is
+compatible with the notion. So the lower case variant was dropped, but
+the principle of distinguishing between lower case (conditional) and
+upper case (mandatory) is retained for possible further extensions.
+.Pp
+The new rule was designed so it can match the meaning (an identifier
+not a locator), be compatible with a Unix filesystem hierarchy, and
+easy to test. The restriction of no ending
+.Ql \&.
+was initially for the simplicity and thus efficiency of testing. But
+it makes some sense. 
+.Ql \&.
+and
+.Qq \&.\&.
+and not identifiers (they are not uniq and do not exist as names in
+any filesystem) but are
+.Qq pronoun
+locators. They end with a dot. So any sequence ending with a dot can
+be reserved for the group of pronoun locators allowing extensions
+of the notion.
+.Pp
+The fact that, when extended filenames search is requested, a command
+passed as
+.Qq bar/foo
+will be searched and not executed in the current directory, thus
+imposing, if it was actually the intention to do so, to specify it as
+.Qq ./bar/foo
+is not considered a slight inconvenient but an improvement.
+.Sh SEE ALSO
+.Xr environ 7 ,
+.Xr exec 3 ,
+.Xr posix_spawn 3 ,
+.Xr sh 1 ,
+.Xr ksh 1 ,
+.Xr csh 1 .
+.Sh SOURCES
+.Pa include/pathsearch.h
+.Pp lib/libc/gen/execvp.c
+.Pp lib/libc/gen/posix_spawnp.c
+.Pp bin/sh/exec.c
+.Pp bin/ksh/exec.c
+.Pp bin/csh/exec.c
+.Sh HISTORY
+Allowing qualified filenames for commands to be searched (not exactly
+with the same rules) was first encountered by the author in the
+.Em Plan9
+system.
+.Sh AUTHOR
+.An "Thierry Laronde" Aq Mt tlaronde@kergis.com .
+.Pp
+The
+.Xr sh 1
+way of defining the
+.Ev PATH
+with interpolated variables, protecting from undefined ones, comes
+from
+.An "Robert Elz" Aq Mt kre@munnari.OZ.AU .
+

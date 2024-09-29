@@ -2370,6 +2370,7 @@
 ./usr/share/man/html7/openssl-glossary.html	man-crypto-htmlman		html,openssl=30
 ./usr/share/man/html7/openssl-threads.html	man-crypto-htmlman		html,openssl=30
 ./usr/share/man/html7/orders.html		man-reference-htmlman	html
+./usr/share/man/html7/pathsearch.html		man-reference-htmlman	html
 ./usr/share/man/html7/pcap-filter.html		man-netutil-htmlman	html
 ./usr/share/man/html7/pcap-linktype.html	man-netutil-htmlman	html
 ./usr/share/man/html7/pcap-tstamp.html		man-netutil-htmlman	html

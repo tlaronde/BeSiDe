@@ -3191,6 +3191,7 @@
 ./usr/include/openssl/x509v3err.h		comp-c-include
 ./usr/include/panel.h				comp-c-include
 ./usr/include/paths.h				comp-c-include
+./usr/include/pathsearch.h			comp-c-include
 ./usr/include/pcap-namedb.h			comp-c-include
 ./usr/include/pcap.h				comp-c-include
 ./usr/include/pcap/bpf.h			comp-c-include
