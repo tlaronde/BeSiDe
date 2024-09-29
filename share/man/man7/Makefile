@@ -20,6 +20,7 @@ MAN+=	module.7
 MAN+=	nls.7
 MAN+=	operator.7
 MAN+=	orders.7
+MAN+=	pathsearch.7
 MAN+=	pkgsrc.7
 MAN+=	release.7
 MAN+=	rfc6056.7

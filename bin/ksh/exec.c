@@ -11,6 +11,7 @@ __RCSID("$NetBSD: exec.c,v 1.28 2018/06/03 12:18:29 kamil Exp $");
 
 #include <sys/stat.h>
 #include <ctype.h>
+#include <pathsearch.h>
 #include <stdbool.h>
 
 #include "sh.h"
@@ -575,7 +576,17 @@ comexec(t, tp, ap, flags)
 		rv = subst_exstat;
 		goto Leave;
 	} else if (!tp) {
-		if (Flag(FRESTRICTED) && ksh_strchr_dirsep(cp)) {
+		const char *path_search_opt;
+		int ln;
+		int do_qfilename;
+
+		ln = strlen(cp);
+		path_search_opt = str_val(global("PATH_SEARCH_OPT"));
+		do_qfilename = PATH_SEARCH_QFILENAME_ON(path_search_opt)
+			&& PATH_SEARCH_IS_QFILENAME(cp, ln);
+
+		if (Flag(FRESTRICTED) && do_qfilename == 0
+			&& ksh_strchr_dirsep(cp)) {
 			warningf(true, "%s: restricted", cp);
 			rv = 1;
 			goto Leave;
@@ -899,8 +910,16 @@ findcom(name, flags)
 	int insert = Flag(FTRACKALL);	/* insert if not found */
 	char *fpath;			/* for function autoloading */
 	char *npath;
+	const char *path_search_opt;
+	size_t ln;
+	int do_qfilename;
 
-	if (ksh_strchr_dirsep(name) != NULL) {
+ 	ln = strlen(name);
+	path_search_opt = str_val(global("PATH_SEARCH_OPT"));
+	do_qfilename = PATH_SEARCH_QFILENAME_ON(path_search_opt)
+		&& PATH_SEARCH_IS_QFILENAME(name, ln);
+
+	if (do_qfilename == 0 && ksh_strchr_dirsep(name) != NULL) {
 		insert = 0;
 		/* prevent FPATH search below */
 		flags &= ~FC_FUNC;
@@ -1050,18 +1069,26 @@ search(name, pathx, mode, errnop)
 	const char *sp, *p;
 	char *xp;
 	XString xs;
+	const char *path_search_opt;
 	int namelen;
+	int do_qfilename;
 
 	if (errnop)
 		*errnop = 0;
 
-	if (ksh_strchr_dirsep(name)) {
+	namelen = strlen(name);
+
+	path_search_opt = str_val(global("PATH_SEARCH_OPT"));
+	do_qfilename = PATH_SEARCH_QFILENAME_ON(path_search_opt)
+		&& PATH_SEARCH_IS_QFILENAME(name, namelen);
+
+	if (do_qfilename == 0 && ksh_strchr_dirsep(name)) {
 		if (search_access(name, mode, errnop) == 0)
 			return (char *)__UNCONST(name);
 		return NULL;
 	}
 
-	namelen = strlen(name) + 1;
+	++namelen;	/* to include terminal nul */
 	Xinit(xs, xp, 128, ATEMP);
 
 	sp = pathx;

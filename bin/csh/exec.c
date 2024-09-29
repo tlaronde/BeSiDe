@@ -45,6 +45,7 @@ __RCSID("$NetBSD: exec.c,v 1.33 2019/01/05 16:54:00 christos Exp $");
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <pathsearch.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -55,7 +56,8 @@ __RCSID("$NetBSD: exec.c,v 1.33 2019/01/05 16:54:00 christos Exp $");
 
 /*
  * System level search and execute of a command.  We look in each directory
- * for the specified command name.  If the name contains a '/' then we
+ * for the specified command name.  If the name contains a '/' and
+ * qualified filenames is not on (see pathsearch.7) then we
  * execute only the full path name.  If there is no search path then we
  * execute only full path names.
  */
@@ -194,13 +196,26 @@ doexec(Char **v, struct command *t)
     sigemptyset(&nsigset);
     (void)sigprocmask(SIG_SETMASK, &nsigset, NULL);
     /*
-     * If no path, no words in path, or a / in the filename then restrict the
-     * command search.
+     * If no path, no words in path, or a / in the filename but not
+     * doing qualified filename, then restrict the command search.
      */
-    if (pathv == 0 || pathv->vec[0] == 0 || slash)
+    {
+    const char *path_search_opt;
+    size_t ln;
+    int do_qfilename;
+
+    ln = strlen(short2str(*av));
+
+    path_search_opt = getenv("PATH_SEARCH_OPT");
+    do_qfilename = PATH_SEARCH_QFILENAME_ON(path_search_opt)
+	&& PATH_SEARCH_IS_QFILENAME(short2str(*av), ln);
+
+    if (pathv == 0 || pathv->vec[0] == 0
+	|| (do_qfilename == 0 && slash) )
 	pv = justabs;
     else
 	pv = pathv->vec;
+    }
     sav = Strspl(STRslash, *av); 	/* / command name for postpending */
     Vsav = sav;
     if (havhash)
@@ -510,12 +525,21 @@ iscommand(Char *name)
     Char **pv, *sav;
     int hashval, hashval1, i;
     int slash;
+    const char *path_search_opt;
+    size_t ln;
+    int do_qfilename;
 
     hashval = 0;
     slash = any(short2str(name), '/');
     v = adrof(STRpath);
     
-    if (v == 0 || v->vec[0] == 0 || slash)
+    ln = strlen(short2str(name));
+
+    path_search_opt = getenv("PATH_SEARCH_OPT");
+    do_qfilename = PATH_SEARCH_QFILENAME_ON(path_search_opt)
+		&& PATH_SEARCH_IS_QFILENAME(short2str(name), ln);
+
+    if (v == 0 || v->vec[0] == 0 || (do_qfilename == 0 && slash) )
 	pv = justabs;
     else
 	pv = v->vec;
@@ -700,10 +724,20 @@ tellmewhat(struct wordent *lexp, Char *str)
     if ((i = iscommand(sp->word)) != 0) {
 	Char **pv;
 	struct varent *v;
+	const char *path_search_opt;
+	size_t ln;
+	int do_qfilename;
 	int    slash = any(short2str(sp->word), '/');
 
+	ln = strlen(short2str(sp->word));
+
+	path_search_opt = getenv("PATH_SEARCH_OPT");
+	do_qfilename = PATH_SEARCH_QFILENAME_ON(path_search_opt)
+		&& PATH_SEARCH_IS_QFILENAME(short2str(sp->word), ln);
+
+
 	v = adrof(STRpath);
-	if (v == 0 || v->vec[0] == 0 || slash)
+	if (v == 0 || v->vec[0] == 0 || (do_qfilename == 0 && slash) )
 	    pv = justabs;
 	else
 	    pv = v->vec;

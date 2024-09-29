@@ -39,6 +39,7 @@ __RCSID("$NetBSD: posix_spawnp.c,v 1.4 2020/05/11 14:54:34 kre Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <paths.h>
+#include <pathsearch.h>
 #include <spawn.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,15 +54,23 @@ int posix_spawnp(pid_t * __restrict pid, const char * __restrict file,
 {
 	char fpath[FILENAME_MAX];
 	const char *path, *p;
+	const char *path_search_opt;
 	size_t lp, ln;
 	int err;
+	int do_qfilename;
 
 	_DIAGASSERT(file != NULL);
 
+	ln = strlen(file);
+	path_search_opt = getenv("PATH_SEARCH_OPT");
+	do_qfilename = PATH_SEARCH_QFILENAME_ON(path_search_opt)
+		&& PATH_SEARCH_IS_QFILENAME(file, ln);
+
 	/*
-	 * If there is a / in the name, fall straight through to posix_spawn().
+	 * If not treating a qualified filename, and there is a / in
+	 *  the name, fall straight through to posix_spawn().
 	 */
-	if (strchr(file, '/') != NULL)
+	if (do_qfilename == 0 && strchr(file, '/') != NULL)
 		return posix_spawn(pid, file, fa, sa, cav, env);
 
 	/* Get the path we're searching. */
@@ -72,7 +81,6 @@ int posix_spawnp(pid_t * __restrict pid, const char * __restrict file,
 	 * Find an executable image with the given name in the PATH
 	 */
 
-	ln = strlen(file);
 	err = 0;
 	do {
 		/* Find the end of this path element. */

@@ -47,6 +47,7 @@ __RCSID("$NetBSD: exec.c,v 1.59 2024/07/12 07:30:30 kre Exp $");
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <pathsearch.h>	/* PATH_SEARCH_OPT */
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -125,12 +126,26 @@ void
 shellexec(char **argv, char **envp, const char *path, int idx, int vforked)
 {
 	char *cmdname;
+#ifndef SMALL
+	const char *path_search_opt;
+	size_t ln;
+	int do_qfilename;
+#endif
 	int e, action;
 	struct stat statb;
 
 	action = E_EXEC;
 
+#ifndef SMALL
+ 	ln = strlen(argv[0]);
+	path_search_opt = lookupvar("PATH_SEARCH_OPT");
+	do_qfilename = PATH_SEARCH_QFILENAME_ON(path_search_opt)
+		&& PATH_SEARCH_IS_QFILENAME(argv[0], ln);
+
+	if (do_qfilename == 0 && strchr(argv[0], '/') != NULL) {
+#else
 	if (strchr(argv[0], '/') != NULL) {
+#endif
 		tryexec(argv[0], argv, envp, vforked);
 		e = errno;
 		if (e == EACCES && stat(argv[0], &statb) == -1)
@@ -574,9 +589,27 @@ find_command(char *name, struct cmdentry *entry, int act, const char *path)
 	struct stat statb;
 	int e;
 	int (*bltin)(int,char **);
+#ifndef SMALL
+	const char *path_search_opt;
+	size_t ln;
+	int do_qfilename;
+#endif
 
+#ifndef SMALL
+ 	ln = strlen(name);
+	path_search_opt = lookupvar("PATH_SEARCH_OPT");
+	do_qfilename = PATH_SEARCH_QFILENAME_ON(path_search_opt)
+		&& PATH_SEARCH_IS_QFILENAME(name, ln);
+
+	/*
+	 * If not searching for a qualified filename, then if the name
+	 * contains a slash, don't use PATH or hash table.
+	 */
+	if (do_qfilename == 0 && strchr(name, '/') != NULL) {
+#else
 	/* If name contains a slash, don't use PATH or hash table */
 	if (strchr(name, '/') != NULL) {
+#endif
 		if (act & DO_ABS) {
 			while (stat(name, &statb) < 0) {
 #ifdef SYSV

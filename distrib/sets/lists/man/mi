@@ -6148,6 +6148,7 @@
 ./usr/share/man/man7/openssl-threads.7		man-crypto-man		.man,openssl=30
 ./usr/share/man/man7/orders.7			man-reference-man	.man
 ./usr/share/man/man7/packages.7			man-obsolete		obsolete
+./usr/share/man/man7/pathsearch.7		man-reference-man
 ./usr/share/man/man7/pcap-filter.7		man-netutil-man		.man
 ./usr/share/man/man7/pcap-linktype.7		man-netutil-man		.man
 ./usr/share/man/man7/pcap-tstamp.7		man-netutil-man		.man
