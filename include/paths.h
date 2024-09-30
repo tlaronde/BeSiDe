@@ -37,7 +37,7 @@
 /*
  * Default user search path.
  * Set by login(1), rshd(8), rexecd(8)
- * Used by execvp(3) absent PATH from the environ(7)
+ * Used by execvp(3) and posix_spawnp(3) absent PATH from the environ(7)
  */
 #ifdef RESCUEDIR
 #define	_PATH_DEFPATH	RESCUEDIR ":/usr/bin:/bin:/usr/pkg/bin:/usr/local/bin"
@@ -49,6 +49,7 @@
  * All standard utilities path.
  * Set by init(8) for system programs & scripts (e.g. /etc/rc)
  * Used by ttyaction(3), whereis(1)
+ * Used as default value by sysctl(8) for user.cs_path
  */
 #define	_PATH_STDPATH \
 	"/usr/bin:/bin:/usr/sbin:/sbin:/usr/pkg/bin:/usr/pkg/sbin:/usr/local/bin:/usr/local/sbin"
