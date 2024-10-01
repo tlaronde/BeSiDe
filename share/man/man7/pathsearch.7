@@ -1,26 +1,26 @@
 .\"
 .\" Public Domain.
 .\"
-.Dd September 29, 2024
+.Dd October 1, 2024
 .Dt PATHSEARCH 7
 .Os
 .Sh NAME
 .Nm pathsearch
 .Nd when and how the search of a file to execute is handled.
 .Sh DESCRIPTION
-A program to execute is given to a shell, to one of the
+A program to execute is given to a shell or to one of the
 .Xr exec 3
 or 
 .Xr posix_spawn 3
-family of functions in two forms: either as a
+families of functions in one of two forms: either as a
 .Em locator
-specifying exactly (even if implicitely) where the file is, or as an
+specifying exactly (even if implicitly) where the file is, or as an
 .Em identifier
-to be searched in order to be located. (POSIX generally use
+in order to be searched for. POSIX generally uses
 .Em path
-as a mean to imply a locator and
+to mean what we here call a locator and
 .Em file
-to imply an identifier.)
+to mean what we call an identifier.
 .Pp
 The shells
 .Xr sh 1 ,
@@ -36,65 +36,98 @@ function (used by the implementation of
 .Xr system 3 )
 handle both locators and identifiers. The other variants of
 .Xr exec 3
-or
+and
 .Xr posix_spawn 3
 expect only locators and do no path searching.
 .Pp
 For the path searching, two environment variables drive the searching:
-.Em PATH
+.Dv PATH
 and
-.Em PATH_SEARCH_OPT .
+.Dv PATH_SEARCH_OPT .
 .Pp
 In order for the searching to be done, the command given as argument
-has to be identified as an identifier, and not as a locator.
+has to be considered an identifier, not a locator.
 .Pp
 The traditional POSIX rule for this is simple: when path searching is
 to be attempted, if the command name given does not contain a
 .Ql \&/ ,
-it is considered an identifier and is then searched. Otherwise, it is a
-locator and no search is done.
+it is considered an identifier and is then searched for. Otherwise, it
+is a locator and no search is done.
 .Pp
 Hence, with the traditional behavior, given a command as 
-.Qq bar/foo ,
-no path searching would be done and this will be tried in the current
-working directory.
+.Pa bar/foo ,
+no path searching would be done and thus the file must exist in the
+current working directory.
 .Pp
 The rules concerning what is an identifier can be changed using the
-.Em PATH_SEARCH_OPT
-variable. See below
-.Sx Extending identifiers to qualified filenames .
+.Dv PATH_SEARCH_OPT
+environment variable. See
+.Sx Extending identifiers to qualified filenames
+below.
 .Pp
 When the argument is considered an identifier (according to whatever
-rule), it is not searched everywhere but only in the directories
+rule), it is not searched for everywhere but only in the directories
 specified in the
-.Em PATH
+.Dv PATH
 environment variable.
 .Pp
 The
-.Em PATH
+.Dv PATH
 is a sequence of colon
 .Ql \&:
 separated directory pathnames to be tried, in turn, for locating the
-identified resource. Initially, it is set to
+identified resource. There are default values defined in
+.Pa paths.h
+used by various programs.
+Initially, it is set to
 .Pp
 .Dl /usr/bin:/bin:/usr/pkg/bin:/usr/local/bin
-by
-.Xr login 1 .
-It can be redefined later.
 .Pp
-An empty dir specification (that can be expressed in PATH by a leading
-or a trailing colon, or by two consecutive colons) means the current
-working directory. This is considered a security risk since, by the very
-nature of the current working, what will be executed depends on the
-context.  It is thus highly recommended to verify that an empty dir
-alternative has not slipped by mistake in the PATH definition.
+by
+.Xr login 1 ,
+.Xr rshd 8 ,
+.Xr rexecd 8 .
+It is also the default value used by
+.Xr execvp 3
+and
+.Xr posix_spawnp 3 
+if
+.Dv PATH
+is not in the
+.Xr environ 7 .
+.Pp
+.Xr init 8
+sets it to
+.Pp
+.Dl /usr/bin:/bin:/usr/sbin:/sbin:/usr/pkg/bin:/usr/pkg/sbin:/usr/local/bin:/usr/local/sbin
+.Pp
+and this value is also used by
+.Xr ttyaction 3 ,
+.Xr whereis 1
+or as the default value used by
+.Xr sysctl 8
+when setting
+.Dv user.cs_path .
+.Pp
+.Dv PATH
+can be redefined by the user.
+.Pp
+An empty dir specification (which can be expressed in
+.Dv PATH
+by a leading or a trailing colon, or by two consecutive colons)
+means the current working directory. This is considered a security
+risk in most environments since, by the very nature of the current
+working directory, what will be executed depends on the context.
+It is thus highly recommended to verify that a non intended empty dir
+alternative is not present in
+.Dv PATH . 
 .Pp
 The
 .Xr sh 1
 syntax allows for example to interpolate a dir specification via a
-variable, but offers means to protect the PATH from having by mistake
-a current working dir definition because the variable is not defined
-or empty, in this way:
+variable, but supports protecting PATH from accidental interpolation
+of an empty directory specification due to an unset variable, using
+syntax such as
 .Pp
 .Dl PATH="/bin:/usr/bin:${MYSCRIPTS:+${MYSCRIPTS}:}/usr/pkg/bin"
 .Pp
@@ -102,19 +135,19 @@ or
 .Pp
 .Dl PATH="/bin:/usr/bin${MYSCRIPTS:+:${MYSCRIPTS}}:/usr/pkg/bin"
 .Pp
-The trick here is that the variable is only expanded if it is
-defined and not empty, and, in this case only, a
-.Ql \&:
-colon is added to its definition. The result being that if the
-.Em MYSCRIPTS
-variable were not defined or empty, this will not result in two
-consecutive colons, adding by mistake the current working directory as
-an alternative dir to search in. See
+Here, the variable is expanded only if it is defined and not empty,
+and in this case only a colon is appended (resp. prepended),
+the result being that if the
+.Dv MYSCRIPTS
+variable is not defined, or empty, no two consecutive
+colons are unintentionally added to the definition of
+.Dv PATH .
+See
 .Xr sh 1
 for an explanation of the syntax.
 .Ss Extending identifiers to qualified filenames
 The environment variable
-.Em PATH_SEARCH_OPT
+.Dv PATH_SEARCH_OPT
 can be defined to change the path searching.
 .Pp
 The definition of the PATH_SEARCH_OPT is a string of ASCII letters
@@ -126,51 +159,52 @@ At the moment, only one option is defined:
 The rule identifying an identifier is changed to allow qualified
 filenames like
 .Qq bar/foo
-to be searched for with the PATH. A
+to be searched for via the PATH. A
 .Em qualified filename
 is a Resource Identifier (not a locator) consisting of a sequence
 of one or more components separated by
 .Ql / ,
-the sequence not starting or ending by a
+the sequence not starting or ending with a
 .Ql /
 and any component not ending by a
 .Ql \&. .
 Thus
-.Qq fs/create ,
-.Qq fs/ck ,
-.Qq fs/mount ,
-.Qq fs/ctl
+.Pa fs/create ,
+.Pa fs/ck ,
+.Pa fs/mount ,
+.Pa fs/ctl
 are all qualified filenames, as well as
-.Qq texlive/latex
+.Pa texlive/latex
 or
-.Qq kertex/latex ,
+.Pa kertex/latex ,
 as well as (G.R.A.S.S. example)
-.Qq vect/in/dxf .
+.Pa vect/in/dxf .
 But 
-.Qq /vect/in/dxf
+.Pa /vect/in/dxf
 is not an identifier but a locator, as well as
-.Qq ./vect/in/dxf
+.Pa ./vect/in/dxf
 or
-.Qq vect/in/dxf.
+.Pa vect/in/dxf.
 in this latter case because of the trailing dot of the last component.
 .El
 .Sh IMPLEMENTATION NOTES
-Since the behavior can not be changed only at a shell level, there
-has to be a mean to inform both the shell and the libc to change the
+Since the behavior cannot be changed only at a shell level, there
+has to be a way to inform both the shell and the libc to change the
 behavior. Hence the
-.Em PATH_SEARCH_OPT
+.Dv PATH_SEARCH_OPT
 environment variable. And since it would be suboptimal to create
 another variable when something has to be optionally changed in the way
-the path is searched, the variable has to have a definition.
+the path is searched, the variable has not only to exist in the
+environment but also has to not be empty.
 .Pp
 The upper case was chosen because, initially, there was a lower case
 variant meaning: do qualified filename searching if not
-.Em POSIXLY_CORRECT .
+.Dv POSIXLY_CORRECT .
 But if this extended behavior is not, strictly speaking, POSIX
 compliant, it is not a violation of the spirit: a qualified filename
-is an identifier, not a locator that is a path wandering instruction; a
-qualified filename can not escape the directory. In this sense, and
-without judging the relevance of the notion of a
+is an identifier, not a locator which is a partial path walk
+specification; a qualified filename cannot escape the directory.
+In this sense, and without judging the relevance of the notion of a
 .Qq restricted shell ,
 as is expressed, for example, in
 .Xr ksh 1 ,
@@ -188,20 +222,40 @@ it makes some sense.
 .Ql \&.
 and
 .Qq \&.\&.
-and not identifiers (they are not uniq and do not exist as names in
-any filesystem) but are
-.Qq pronoun
-locators. They end with a dot. So any sequence ending with a dot can
-be reserved for the group of pronoun locators allowing extensions
+are not identifiers (they mean
+.Ql here
+and
+.Ql there )
+and are
+.Qq adverbs
+to walking a path, as well as
+.Ql I
+is not an identifier (unless in a very defined context) but a
+.Ql pronoun
+whose definition varies from the context. An identifier should be non
+ambiguous.
+.Pp
+The
+.Ql \&.
+and
+.Qq \&.\&.
+end with a dot. So any sequence ending with a dot can
+be reserved for the group of adverb locators allowing extensions
 of the notion.
 .Pp
 The fact that, when extended filenames search is requested, a command
 passed as
-.Qq bar/foo
+.Pa bar/foo
 will be searched and not executed in the current directory, thus
 imposing, if it was actually the intention to do so, to specify it as
-.Qq ./bar/foo
+.Pa ./bar/foo
 is not considered a slight inconvenient but an improvement.
+Altogether, when simply specifying
+.Pa foo
+the search is done, if
+.Pa bar/boo
+is also an identifier, the rule has not to be different: searched too,
+so not executed in the current working directory.
 .Sh SEE ALSO
 .Xr environ 7 ,
 .Xr exec 3 ,
@@ -211,6 +265,7 @@ is not considered a slight inconvenient but an improvement.
 .Xr csh 1 .
 .Sh SOURCES
 .Pa include/pathsearch.h
+.Pa include/paths.h
 .Pp lib/libc/gen/execvp.c
 .Pp lib/libc/gen/posix_spawnp.c
 .Pp bin/sh/exec.c
@@ -223,6 +278,11 @@ with the same rules) was first encountered by the author in the
 system.
 .Sh AUTHOR
 .An "Thierry Laronde" Aq Mt tlaronde@kergis.com .
+.Pp
+.Mt mouse@NetBSD.org
+review extensively the man page to correct the wording and to ensure
+a better expression of the semantics (for the rules concerning what is
+an identifier, they are still under discussion).
 .Pp
 The
 .Xr sh 1
