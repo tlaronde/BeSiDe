@@ -1,7 +1,7 @@
 .\"
 .\" Public Domain.
 .\"
-.Dd October 1, 2024
+.Dd October 3, 2024
 .Dt PATHSEARCH 7
 .Os
 .Sh NAME
@@ -166,8 +166,10 @@ of one or more components separated by
 .Ql / ,
 the sequence not starting or ending with a
 .Ql /
-and any component not ending by a
-.Ql \&. .
+and comprising no path walk directives (relative paths, double dot
+.Qq \&.\&.
+or single dot:
+.Qq \&. .
 Thus
 .Pa fs/create ,
 .Pa fs/ck ,
@@ -184,13 +186,20 @@ But
 is not an identifier but a locator, as well as
 .Pa ./vect/in/dxf
 or
-.Pa vect/in/dxf.
-in this latter case because of the trailing dot of the last component.
+.Pa vect/in/../out/dxf
+or even
+.Pa vect/in/./dxf . The main difference with the traditional behavior,
+except for allowing using subdirectories in the identifier, is that
+an identifier like
+.Pa bar/foo
+will not be executed, if found, in the current working directory, but
+will be searched for.
 .El
 .Sh IMPLEMENTATION NOTES
-Since the behavior cannot be changed only at a shell level, there
-has to be a way to inform both the shell and the libc to change the
-behavior. Hence the
+Since the behavior cannot be changed only at a shell level if it has
+to work also when passing an utility identifier as an argument to
+another utility, there has to be a way to inform both the shell
+and the libc to change the behavior. Hence the
 .Dv PATH_SEARCH_OPT
 environment variable. And since it would be suboptimal to create
 another variable when something has to be optionally changed in the way
@@ -213,36 +222,6 @@ compatible with the notion. So the lower case variant was dropped, but
 the principle of distinguishing between lower case (conditional) and
 upper case (mandatory) is retained for possible further extensions.
 .Pp
-The new rule was designed so it can match the meaning (an identifier
-not a locator), be compatible with a Unix filesystem hierarchy, and
-easy to test. The restriction of no ending
-.Ql \&.
-was initially for the simplicity and thus efficiency of testing. But
-it makes some sense. 
-.Ql \&.
-and
-.Qq \&.\&.
-are not identifiers (they mean
-.Ql here
-and
-.Ql there )
-and are
-.Qq adverbs
-to walking a path, as well as
-.Ql I
-is not an identifier (unless in a very defined context) but a
-.Ql pronoun
-whose definition varies from the context. An identifier should be non
-ambiguous.
-.Pp
-The
-.Ql \&.
-and
-.Qq \&.\&.
-end with a dot. So any sequence ending with a dot can
-be reserved for the group of adverb locators allowing extensions
-of the notion.
-.Pp
 The fact that, when extended filenames search is requested, a command
 passed as
 .Pa bar/foo
@@ -250,12 +229,12 @@ will be searched and not executed in the current directory, thus
 imposing, if it was actually the intention to do so, to specify it as
 .Pa ./bar/foo
 is not considered a slight inconvenient but an improvement.
-Altogether, when simply specifying
+Altogether, since, with the traditional behavior, when simply specifying
 .Pa foo
 the search is done, if
 .Pa bar/boo
-is also an identifier, the rule has not to be different: searched too,
-so not executed in the current working directory.
+is to be considered an identifier, the rule has not to be different:
+searched too, so not executed in the current working directory.
 .Sh SEE ALSO
 .Xr environ 7 ,
 .Xr exec 3 ,
@@ -272,8 +251,8 @@ so not executed in the current working directory.
 .Pp bin/ksh/exec.c
 .Pp bin/csh/exec.c
 .Sh HISTORY
-Allowing qualified filenames for commands to be searched (not exactly
-with the same rules) was first encountered by the author in the
+Allowing qualified filenames for commands to be searched for was first
+encountered by the author in the
 .Em Plan9
 system.
 .Sh AUTHOR
